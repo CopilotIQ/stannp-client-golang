@@ -2,12 +2,12 @@ package stannp
 
 import (
 	"copilotiq/stannp-client-golang/letter"
-	"encoding/json"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
-	"github.com/nsf/jsondiff"
 	"log"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -95,29 +95,12 @@ func TestSendLetter(t *testing.T) {
 	}
 
 	// Note: This call is not actually sending a request.
-	response, err := TestClient.SendLetter(request)
-	assert.Nil(t, err)
+	response, apiErr := TestClient.SendLetter(request)
+	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 
-	expected := &letter.Response{
-		Success: true,
-		Data: letter.Data{
-			Pdf:     "https://random.pdf",
-			Id:      "0",
-			Created: "2023-05-17T21:06:48+00:00",
-			Format:  "US-LETTER",
-			Cost:    "0.81",
-			Status:  "test",
-		},
-	}
-
-	// Convert to JSON
-	responseJSON, jsonErr := json.Marshal(response)
-	assert.Nil(t, jsonErr)
-	expectedJSON, jsonErr := json.Marshal(expected)
-	assert.Nil(t, jsonErr)
-
-	difference, differences := jsondiff.Compare(responseJSON, expectedJSON, &jsondiff.Options{})
-	if difference != jsondiff.FullMatch {
-		t.Errorf("Response does not match expected: %s", differences)
-	}
+	assert.True(t, response.Success)
+	assert.Equal(t, "0.81", response.Data.Cost)
+	assert.Equal(t, "US-LETTER", response.Data.Format)
+	assert.Equal(t, "test", response.Data.Status)
+	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
 }

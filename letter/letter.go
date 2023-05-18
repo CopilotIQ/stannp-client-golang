@@ -18,7 +18,7 @@ type MergeVariables map[string]string
 type Request struct {
 	MergeVariables MergeVariables   `json:"mergeVariables"`
 	Recipient      RecipientDetails `json:"recipient"`
-	Template       int              `json:"template"`
+	Template       string           `json:"template"`
 }
 
 type Data struct {

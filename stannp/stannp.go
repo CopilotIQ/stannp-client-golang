@@ -117,7 +117,7 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 func (s *Stannp) SendLetter(request letter.Request) (*letter.Response, *util.APIError) {
 	formData := url.Values{}
 	formData.Set("test", strconv.FormatBool(s.test))
-	formData.Set("template", strconv.Itoa(request.Template))
+	formData.Set("template", request.Template)
 	formData.Set("clearzone", strconv.FormatBool(s.clearZone))
 	formData.Set("duplex", strconv.FormatBool(s.duplex))
 	formData.Set("post_unverified", strconv.FormatBool(s.postUnverified))

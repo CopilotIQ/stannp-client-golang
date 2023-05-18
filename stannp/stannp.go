@@ -1,9 +1,9 @@
 package stannp
 
 import (
-	"copilotiq/stannp-client-golang/letter"
-	"copilotiq/stannp-client-golang/util"
 	"fmt"
+	"github.com/CopilotIQ/stannp-client-golang/letter"
+	"github.com/CopilotIQ/stannp-client-golang/util"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,7 +17,9 @@ const CreateURL = "create"
 type Stannp struct {
 	apiKey         string
 	baseUrl        string
+	clearZone      bool
 	client         *http.Client
+	duplex         bool
 	postUnverified bool
 	test           bool
 }
@@ -42,13 +44,27 @@ func WithPostUnverified(postUnverified bool) APIOption {
 	}
 }
 
+func WithClearZone(clearZone bool) APIOption {
+	return func(s *Stannp) {
+		s.clearZone = clearZone
+	}
+}
+
+func WithDuplex(duplex bool) APIOption {
+	return func(s *Stannp) {
+		s.duplex = duplex
+	}
+}
+
 func New(options ...APIOption) *Stannp {
 	api := &Stannp{
 		apiKey:         "test123456",
 		baseUrl:        BaseURL,
+		clearZone:      true,
+		client:         http.DefaultClient,
+		duplex:         true,
 		postUnverified: false,
 		test:           true,
-		client:         http.DefaultClient,
 	}
 
 	for _, option := range options {
@@ -102,8 +118,8 @@ func (s *Stannp) SendLetter(request letter.Request) (*letter.Response, *util.API
 	formData := url.Values{}
 	formData.Set("test", strconv.FormatBool(s.test))
 	formData.Set("template", strconv.Itoa(request.Template))
-	formData.Set("clearzone", strconv.FormatBool(request.ClearZone))
-	formData.Set("duplex", strconv.FormatBool(request.Duplex))
+	formData.Set("clearzone", strconv.FormatBool(s.clearZone))
+	formData.Set("duplex", strconv.FormatBool(s.duplex))
 	formData.Set("post_unverified", strconv.FormatBool(s.postUnverified))
 	formData.Set("recipient[title]", request.Recipient.Title)
 	formData.Set("recipient[firstname]", request.Recipient.Firstname)

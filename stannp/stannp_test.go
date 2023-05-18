@@ -1,7 +1,7 @@
 package stannp
 
 import (
-	"copilotiq/stannp-client-golang/letter"
+	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
 	"log"
@@ -34,6 +34,8 @@ func setup() {
 	// Initialize Stannp with test data
 	TestClient = New(
 		WithAPIKey(apiKey),
+		WithClearZone(false),
+		WithDuplex(false),
 		WithPostUnverified(false),
 		WithTest(true),
 	)
@@ -57,30 +59,28 @@ func TestNew(t *testing.T) {
 		t.Fatal("STANNP_API_KEY not set in .env file")
 	}
 
-	// Test data
-	postUnverified := false
-	test := true
-
 	// Initialize Stannp with test data
 	api := New(
 		WithAPIKey(envAPIKey),
-		WithPostUnverified(postUnverified),
-		WithTest(test),
+		WithClearZone(false),
+		WithDuplex(false),
+		WithPostUnverified(true),
+		WithTest(true),
 	)
 
 	// Assert that the Stannp client has been initialized with the correct values
-	assert.Equal(t, envAPIKey, api.apiKey, "APIKey does not match expected")
-	assert.Equal(t, BaseURL, api.baseUrl, "BaseURL does not match expected")
-	assert.Equal(t, postUnverified, api.postUnverified, "PostUnverified does not match expected")
-	assert.Equal(t, test, api.test, "Test does not match expected")
+	assert.Equal(t, envAPIKey, api.apiKey)
+	assert.Equal(t, BaseURL, api.baseUrl)
+	assert.Equal(t, false, api.clearZone)
+	assert.Equal(t, false, api.duplex)
+	assert.Equal(t, true, api.postUnverified)
+	assert.Equal(t, true, api.test)
 }
 
 func TestSendLetter(t *testing.T) {
 	// Call SendLetter with a new instance of Request
 	request := letter.Request{
-		Template:  305202,
-		ClearZone: true,
-		Duplex:    true,
+		Template: 305202,
 		Recipient: letter.RecipientDetails{
 			Title:     "Mr.",
 			Firstname: "John",

@@ -16,8 +16,6 @@ type RecipientDetails struct {
 type MergeVariables map[string]string
 
 type Request struct {
-	ClearZone      bool             `json:"clearZone"`
-	Duplex         bool             `json:"duplex"`
 	MergeVariables MergeVariables   `json:"mergeVariables"`
 	Recipient      RecipientDetails `json:"recipient"`
 	Template       int              `json:"template"`

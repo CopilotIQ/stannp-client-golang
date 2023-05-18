@@ -16,7 +16,7 @@ func TestSendLetter(t *testing.T) {
 		stannp.WithPostUnverified(true),
 	)
 
-	// Call SendLetter with a new instance of SendLetterRequest
+	// Call SendLetter with a new instance of Request
 	request := stannp.SendLetterRequest{
 		Test:      true,
 		Template:  305202,

@@ -77,7 +77,7 @@ func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	return u.String(), nil
 }
 
-func (s *Stannp) Post(inputReader io.Reader, inputURL string) (*http.Response, *util.APIError) {
+func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *util.APIError) {
 	authURL, wrapErr := s.wrapAuth(inputURL)
 	if wrapErr != nil {
 		return nil, wrapErr
@@ -100,7 +100,7 @@ func (s *Stannp) Post(inputReader io.Reader, inputURL string) (*http.Response, *
 
 func (s *Stannp) SendLetter(request letter.Request) (*letter.Response, *util.APIError) {
 	formData := url.Values{}
-	formData.Set("test", strconv.FormatBool(request.Test))
+	formData.Set("test", strconv.FormatBool(s.test))
 	formData.Set("template", strconv.Itoa(request.Template))
 	formData.Set("clearzone", strconv.FormatBool(request.ClearZone))
 	formData.Set("duplex", strconv.FormatBool(request.Duplex))
@@ -119,7 +119,7 @@ func (s *Stannp) SendLetter(request letter.Request) (*letter.Response, *util.API
 		formData.Set("recipient["+key+"]", value)
 	}
 
-	res, postErr := s.Post(strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"))
+	res, postErr := s.post(strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"))
 	if postErr != nil {
 		return nil, postErr
 	}

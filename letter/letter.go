@@ -21,7 +21,6 @@ type Request struct {
 	MergeVariables MergeVariables   `json:"mergeVariables"`
 	Recipient      RecipientDetails `json:"recipient"`
 	Template       int              `json:"template"`
-	Test           bool             `json:"test"`
 }
 
 type Data struct {

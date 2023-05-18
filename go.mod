@@ -1,4 +1,4 @@
-module copilotiq/stannp-client-golang
+module github.com/copilotiq/stannp-client-golang
 
 go 1.18
 

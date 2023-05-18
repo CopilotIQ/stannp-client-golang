@@ -114,7 +114,7 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 	return res, nil
 }
 
-func (s *Stannp) SendLetter(request letter.Request) (*letter.Response, *util.APIError) {
+func (s *Stannp) SendLetter(request *letter.Request) (*letter.Response, *util.APIError) {
 	formData := url.Values{}
 	formData.Set("test", strconv.FormatBool(s.test))
 	formData.Set("template", request.Template)

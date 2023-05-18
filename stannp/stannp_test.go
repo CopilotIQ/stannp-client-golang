@@ -79,7 +79,7 @@ func TestNew(t *testing.T) {
 
 func TestSendLetter(t *testing.T) {
 	// Call SendLetter with a new instance of Request
-	request := letter.Request{
+	request := &letter.Request{
 		Template: "305202",
 		Recipient: letter.RecipientDetails{
 			Title:     "Mr.",

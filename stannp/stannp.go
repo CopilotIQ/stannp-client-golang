@@ -2,6 +2,7 @@ package stannp
 
 import (
 	"fmt"
+	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
 	"io"
@@ -13,6 +14,7 @@ import (
 
 const BaseURL = "https://us.stannp.com/api/v1"
 const CreateURL = "create"
+const ValidateURL = "validate"
 
 type Stannp struct {
 	apiKey         string
@@ -114,7 +116,7 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 	return res, nil
 }
 
-func (s *Stannp) SendLetter(request *letter.Request) (*letter.Response, *util.APIError) {
+func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError) {
 	formData := url.Values{}
 	formData.Set("clearzone", strconv.FormatBool(s.clearZone))
 	formData.Set("duplex", strconv.FormatBool(s.duplex))
@@ -140,11 +142,27 @@ func (s *Stannp) SendLetter(request *letter.Request) (*letter.Response, *util.AP
 		return nil, postErr
 	}
 
-	var letterRes letter.Response
+	var letterRes letter.SendRes
 	resErr := util.ResToType(res.StatusCode, res.Body, &letterRes)
-	if resErr != nil {
-		return nil, resErr
+	return &letterRes, resErr
+}
+
+func (s *Stannp) ValidateAddress(request address.ValidateReq) (*address.ValidateRes, *util.APIError) {
+	// Create URL values
+	formData := url.Values{}
+	formData.Set("company", request.Company)
+	formData.Set("address1", request.Address1)
+	formData.Set("address2", request.Address2)
+	formData.Set("city", request.City)
+	formData.Set("zipcode", request.Zipcode)
+	formData.Set("country", request.Country)
+
+	res, postErr := s.post(strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, address.URL, ValidateURL}, "/"))
+	if postErr != nil {
+		return nil, postErr
 	}
 
-	return &letterRes, nil
+	var addressRes address.ValidateRes
+	resErr := util.ResToType(res.StatusCode, res.Body, &addressRes)
+	return &addressRes, resErr
 }

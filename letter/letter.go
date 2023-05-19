@@ -15,7 +15,7 @@ type RecipientDetails struct {
 
 type MergeVariables map[string]string
 
-type Request struct {
+type SendReq struct {
 	MergeVariables MergeVariables   `json:"mergeVariables"`
 	Recipient      RecipientDetails `json:"recipient"`
 	Template       string           `json:"template"`
@@ -30,7 +30,7 @@ type Data struct {
 	Status  string `json:"status"`
 }
 
-type Response struct {
+type SendRes struct {
 	Data    Data `json:"data"`
 	Success bool `json:"success"`
 }

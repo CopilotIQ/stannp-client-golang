@@ -1,6 +1,7 @@
 package stannp
 
 import (
+	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
@@ -78,8 +79,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestSendLetter(t *testing.T) {
-	// Call SendLetter with a new instance of Request
-	request := &letter.Request{
+	// Call SendLetter with a new instance of SendReq
+	request := &letter.SendReq{
 		Template: "305202",
 		Recipient: letter.RecipientDetails{
 			Title:     "Mr.",
@@ -102,4 +103,26 @@ func TestSendLetter(t *testing.T) {
 	assert.Equal(t, "US-LETTER", response.Data.Format)
 	assert.Equal(t, "test", response.Data.Status)
 	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
+}
+
+func TestValidateAddress(t *testing.T) {
+	t.Run("verify is_valid is false for fake data", func(t *testing.T) {
+		request := address.ValidateReq{
+			Company:  "Mock Company",
+			Address1: "1234 Mock Street",
+			Address2: "Suite 200",
+			City:     "Mock City",
+			Zipcode:  "12345",
+			Country:  "US",
+		}
+	})
+	t.Run("verify is_valid is true for real data", func(t *testing.T) {
+		request := address.ValidateReq{
+			Company:  "Beverly Hills Courthouse",
+			Address1: "9355 Burton Way",
+			City:     "Beverly Hills",
+			Zipcode:  "90210",
+			Country:  "US",
+		}
+	})
 }

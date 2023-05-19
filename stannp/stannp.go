@@ -116,19 +116,19 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 
 func (s *Stannp) SendLetter(request *letter.Request) (*letter.Response, *util.APIError) {
 	formData := url.Values{}
-	formData.Set("test", strconv.FormatBool(s.test))
-	formData.Set("template", request.Template)
 	formData.Set("clearzone", strconv.FormatBool(s.clearZone))
 	formData.Set("duplex", strconv.FormatBool(s.duplex))
 	formData.Set("post_unverified", strconv.FormatBool(s.postUnverified))
-	formData.Set("recipient[title]", request.Recipient.Title)
+	formData.Set("recipient[address1]", request.Recipient.Address1)
+	formData.Set("recipient[country]", request.Recipient.Country)
 	formData.Set("recipient[firstname]", request.Recipient.Firstname)
 	formData.Set("recipient[lastname]", request.Recipient.Lastname)
-	formData.Set("recipient[address1]", request.Recipient.Address1)
+	formData.Set("recipient[state]", request.Recipient.State)
+	formData.Set("recipient[title]", request.Recipient.Title)
 	formData.Set("recipient[town]", request.Recipient.Town)
 	formData.Set("recipient[zipcode]", request.Recipient.Zipcode)
-	formData.Set("recipient[state]", request.Recipient.State)
-	formData.Set("recipient[country]", request.Recipient.Country)
+	formData.Set("template", request.Template)
+	formData.Set("test", strconv.FormatBool(s.test))
 
 	// set custom merge variables in the formData
 	for key, value := range request.MergeVariables {

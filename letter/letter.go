@@ -22,15 +22,15 @@ type Request struct {
 }
 
 type Data struct {
-	Pdf     string `json:"pdf"`
-	Id      string `json:"id"`
+	Cost    string `json:"cost"`
 	Created string `json:"created"`
 	Format  string `json:"format"`
-	Cost    string `json:"cost"`
+	Id      string `json:"id"`
+	Pdf     string `json:"pdf"`
 	Status  string `json:"status"`
 }
 
 type Response struct {
-	Success bool `json:"success"`
 	Data    Data `json:"data"`
+	Success bool `json:"success"`
 }

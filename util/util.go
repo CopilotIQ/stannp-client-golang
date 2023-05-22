@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +20,22 @@ func BuildError(code int, errorMessage string, success bool) *APIError {
 		Error:   errorMessage,
 		Success: success,
 	}
+}
+
+func RandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	bytes := make([]byte, n)
+
+	_, err := rand.Read(bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	for i, b := range bytes {
+		bytes[i] = letters[b%byte(len(letters))]
+	}
+
+	return string(bytes)
 }
 
 func ResToType(code int, reader io.Reader, successType interface{}) *APIError {

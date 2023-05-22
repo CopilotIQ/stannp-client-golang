@@ -8,6 +8,7 @@ type ValidateReq struct {
 	City     string `json:"city"`
 	Company  string `json:"company"`
 	Country  string `json:"country"`
+	State    string `json:"state"`
 	Zipcode  string `json:"zipcode"`
 }
 

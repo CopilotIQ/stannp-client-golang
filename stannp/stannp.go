@@ -147,7 +147,7 @@ func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.API
 	return &letterRes, resErr
 }
 
-func (s *Stannp) ValidateAddress(request address.ValidateReq) (*address.ValidateRes, *util.APIError) {
+func (s *Stannp) ValidateAddress(request *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
 	// Create URL values
 	formData := url.Values{}
 	formData.Set("company", request.Company)

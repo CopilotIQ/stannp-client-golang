@@ -107,22 +107,33 @@ func TestSendLetter(t *testing.T) {
 
 func TestValidateAddress(t *testing.T) {
 	t.Run("verify is_valid is false for fake data", func(t *testing.T) {
-		request := address.ValidateReq{
-			Company:  "Mock Company",
-			Address1: "1234 Mock Street",
-			Address2: "Suite 200",
-			City:     "Mock City",
-			Zipcode:  "12345",
+		request := &address.ValidateReq{
+			Address1: "9354444445 Burton Way",
+			City:     "Beverly Hills",
+			Company:  "Beverly Hills Courthouse",
 			Country:  "US",
+			State:    "CA",
+			Zipcode:  "90210",
 		}
+
+		validateRes, apiErr := TestClient.ValidateAddress(request)
+		assert.True(t, reflect.ValueOf(apiErr).IsNil())
+		assert.False(t, validateRes.Data.IsValid)
+		assert.True(t, validateRes.Success)
 	})
 	t.Run("verify is_valid is true for real data", func(t *testing.T) {
-		request := address.ValidateReq{
-			Company:  "Beverly Hills Courthouse",
+		request := &address.ValidateReq{
 			Address1: "9355 Burton Way",
 			City:     "Beverly Hills",
-			Zipcode:  "90210",
+			Company:  "Beverly Hills Courthouse",
 			Country:  "US",
+			State:    "CA",
+			Zipcode:  "90210",
 		}
+
+		validateRes, apiErr := TestClient.ValidateAddress(request)
+		assert.True(t, reflect.ValueOf(apiErr).IsNil())
+		assert.True(t, validateRes.Data.IsValid)
+		assert.True(t, validateRes.Success)
 	})
 }

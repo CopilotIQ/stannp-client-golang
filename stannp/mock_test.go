@@ -197,3 +197,16 @@ func TestMockValidateAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestInterface(t *testing.T) {
+	newReal := func() Client {
+		return New()
+	}
+
+	newFake := func() Client {
+		return NewMockClient()
+	}
+
+	assert.NotNil(t, newReal)
+	assert.NotNil(t, newFake())
+}

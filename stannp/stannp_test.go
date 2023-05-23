@@ -83,14 +83,15 @@ func TestSendLetter(t *testing.T) {
 	request := &letter.SendReq{
 		Template: "305202",
 		Recipient: letter.RecipientDetails{
-			Title:     "Mr.",
-			Firstname: "John",
-			Lastname:  "Doe",
-			Address1:  "123 Random St",
-			Town:      "Townsville",
-			Zipcode:   "12345",
-			State:     "Stateville",
-			Country:   "US",
+			Address1:  "9355 Burton Way",
+			Address2:  "Courthouse",
+			Country:   "United States",
+			Firstname: "Judge",
+			Lastname:  "Judy",
+			State:     "CA",
+			Title:     "Mrs.",
+			Town:      "Beverly Hills",
+			Zipcode:   "90210",
 		},
 	}
 

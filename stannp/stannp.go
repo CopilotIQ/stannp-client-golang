@@ -122,6 +122,7 @@ func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.API
 	formData.Set("duplex", strconv.FormatBool(s.duplex))
 	formData.Set("post_unverified", strconv.FormatBool(s.postUnverified))
 	formData.Set("recipient[address1]", request.Recipient.Address1)
+	formData.Set("recipient[address2]", request.Recipient.Address2)
 	formData.Set("recipient[country]", request.Recipient.Country)
 	formData.Set("recipient[firstname]", request.Recipient.Firstname)
 	formData.Set("recipient[lastname]", request.Recipient.Lastname)

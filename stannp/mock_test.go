@@ -20,11 +20,18 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{},
 		},
 		{
-			name: "with failNext",
+			name: "with addressFailNext",
 			opts: []MockOption{
-				WithFailNext(true),
+				WithAddressFailNext(true),
 			},
-			expect: MockClient{failNext: true},
+			expect: MockClient{addressFailNext: true},
+		},
+		{
+			name: "with letterFailNext",
+			opts: []MockOption{
+				WithLetterFailNext(true),
+			},
+			expect: MockClient{letterFailNext: true},
 		},
 		{
 			name: "with invalidNext",
@@ -50,12 +57,19 @@ func TestNewMockClient(t *testing.T) {
 		{
 			name: "with all options",
 			opts: []MockOption{
-				WithFailNext(true),
-				WithInvalidNext(true),
+				WithAddressFailNext(true),
 				WithCodeNext(400),
 				WithErrNext("simulated error"),
+				WithInvalidNext(true),
+				WithLetterFailNext(true),
 			},
-			expect: MockClient{failNext: true, invalidNext: true, codeNext: 400, errNext: "simulated error"},
+			expect: MockClient{
+				addressFailNext: true,
+				codeNext:        400,
+				errNext:         "simulated error",
+				invalidNext:     true,
+				letterFailNext:  true,
+			},
 		},
 	}
 
@@ -82,20 +96,20 @@ func TestMockSendLetter(t *testing.T) {
 		},
 		{
 			name:              "success not expected err expected",
-			mockClientOptions: []MockOption{WithFailNext(true)},
+			mockClientOptions: []MockOption{WithLetterFailNext(true)},
 			expectedSuccess:   false,
 			expectedError: &util.APIError{
 				Code:    500,
-				Error:   "failNext is true",
+				Error:   "letterFailNext is true",
 				Success: false,
 			},
 		},
 		{
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
-				WithFailNext(true),
 				WithCodeNext(404),
 				WithErrNext("custom message"),
+				WithLetterFailNext(true),
 			},
 			expectedSuccess: false,
 			expectedError: &util.APIError{
@@ -153,20 +167,20 @@ func TestMockValidateAddress(t *testing.T) {
 		},
 		{
 			name:              "err expected",
-			mockClientOptions: []MockOption{WithFailNext(true)},
+			mockClientOptions: []MockOption{WithAddressFailNext(true)},
 			isValidExpected:   false,
 			errExpected: &util.APIError{
 				Code:    500,
-				Error:   "failNext is true",
+				Error:   "addressFailNext is true",
 				Success: false,
 			},
 		},
 		{
 			name: "fail next code next err next",
 			mockClientOptions: []MockOption{
+				WithAddressFailNext(true),
 				WithCodeNext(400),
 				WithErrNext("custom message"),
-				WithFailNext(true),
 			},
 			isValidExpected: false,
 			errExpected: &util.APIError{

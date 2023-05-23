@@ -15,15 +15,22 @@ type Client interface {
 type MockOption func(*MockClient)
 
 type MockClient struct {
-	failNext    bool
-	invalidNext bool
-	codeNext    int
-	errNext     string
+	invalidNext     bool
+	codeNext        int
+	errNext         string
+	addressFailNext bool
+	letterFailNext  bool
 }
 
-func WithFailNext(failNext bool) MockOption {
+func WithAddressFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
-		c.failNext = failNext
+		c.addressFailNext = failNext
+	}
+}
+
+func WithLetterFailNext(failNext bool) MockOption {
+	return func(c *MockClient) {
+		c.letterFailNext = failNext
 	}
 }
 
@@ -56,10 +63,10 @@ func NewMockClient(opts ...MockOption) *MockClient {
 }
 
 func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIError) {
-	if mc.failNext {
+	if mc.letterFailNext {
 		apiErr := &util.APIError{
 			Code:    500,
-			Error:   "failNext is true",
+			Error:   "letterFailNext is true",
 			Success: false,
 		}
 
@@ -88,10 +95,10 @@ func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIE
 }
 
 func (mc *MockClient) ValidateAddress(_ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
-	if mc.failNext {
+	if mc.addressFailNext {
 		apiErr := &util.APIError{
 			Code:    500,
-			Error:   "failNext is true",
+			Error:   "addressFailNext is true",
 			Success: false,
 		}
 

@@ -14,6 +14,10 @@ type APIError struct {
 	Success bool   `json:"success"`
 }
 
+func (apiError *APIError) String() string {
+	return fmt.Sprintf("Stannp Client API Error: Code [%d] Success [%t] Error [%s]", apiError.Code, apiError.Success, apiError.Error)
+}
+
 func BuildError(code int, errorMessage string, success bool) *APIError {
 	return &APIError{
 		Code:    code,

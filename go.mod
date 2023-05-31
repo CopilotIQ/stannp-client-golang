@@ -8,4 +8,7 @@ require (
 	github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1
 )
 
-require github.com/jgroeneveld/schema v1.0.0 // indirect
+require (
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/jgroeneveld/schema v1.0.0 // indirect
+)

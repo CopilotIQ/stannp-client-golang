@@ -37,6 +37,7 @@ func setup() {
 		WithAPIKey(apiKey),
 		WithClearZone(false),
 		WithDuplex(false),
+		WithIdempotencyFunc(DefaultIdemFunc),
 		WithPostUnverified(false),
 		WithTest(true),
 	)
@@ -67,6 +68,7 @@ func TestNew(t *testing.T) {
 		WithDuplex(false),
 		WithPostUnverified(true),
 		WithTest(true),
+		WithIdempotencyFunc(DefaultIdemFunc),
 	)
 
 	// Assert that the Stannp client has been initialized with the correct values
@@ -76,6 +78,8 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, false, api.duplex)
 	assert.Equal(t, true, api.postUnverified)
 	assert.Equal(t, true, api.test)
+	assert.NotNil(t, api.idemFunc)
+	assert.Equal(t, 36, len(api.idemFunc()))
 }
 
 func TestSendLetter(t *testing.T) {

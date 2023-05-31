@@ -5,7 +5,9 @@ import (
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
+	"github.com/google/uuid"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,12 +18,24 @@ const BaseURL = "https://us.stannp.com/api/v1"
 const CreateURL = "create"
 const ValidateURL = "validate"
 
+type IdempotencyFunc func() string
+
+var DefaultIdemFunc = func() string {
+	guid, uuidErr := uuid.NewUUID()
+	if uuidErr != nil {
+		log.Fatalf("cannot generate UUID [%+v]", uuidErr)
+	}
+
+	return guid.String()
+}
+
 type Stannp struct {
 	apiKey         string
 	baseUrl        string
 	clearZone      bool
 	client         *http.Client
 	duplex         bool
+	idemFunc       IdempotencyFunc
 	postUnverified bool
 	test           bool
 }
@@ -55,6 +69,12 @@ func WithClearZone(clearZone bool) APIOption {
 func WithDuplex(duplex bool) APIOption {
 	return func(s *Stannp) {
 		s.duplex = duplex
+	}
+}
+
+func WithIdempotencyFunc(f IdempotencyFunc) APIOption {
+	return func(s *Stannp) {
+		s.idemFunc = f
 	}
 }
 
@@ -107,6 +127,10 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	if s.idemFunc != nil {
+		req.Header.Set("X-Idempotency-Key", s.idemFunc())
+	}
 
 	res, err := s.client.Do(req)
 	if err != nil {

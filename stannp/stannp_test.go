@@ -85,7 +85,7 @@ func TestNew(t *testing.T) {
 func TestSendLetter(t *testing.T) {
 	// Call SendLetter with a new instance of SendReq
 	request := &letter.SendReq{
-		Template: "305202",
+		Template: "307051",
 		Recipient: letter.RecipientDetails{
 			Address1:  "9355 Burton Way",
 			Address2:  "Courthouse",

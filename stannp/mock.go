@@ -86,7 +86,7 @@ func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIE
 			Cost:    util.RandomString(10),
 			Created: util.RandomString(10),
 			Format:  util.RandomString(10),
-			Id:      util.RandomString(10),
+			Id:      0,
 			Pdf:     util.RandomString(10),
 			Status:  "received",
 		},

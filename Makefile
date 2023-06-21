@@ -1,3 +1,5 @@
+all: format build test
+
 build:
 	go build -ldflags="-s -w" ./...
 

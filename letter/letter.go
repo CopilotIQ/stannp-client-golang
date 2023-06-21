@@ -1,5 +1,7 @@
 package letter
 
+import "encoding/json"
+
 const URL = "letters"
 
 type RecipientDetails struct {
@@ -23,12 +25,12 @@ type SendReq struct {
 }
 
 type Data struct {
-	Cost    string `json:"cost"`
-	Created string `json:"created"`
-	Format  string `json:"format"`
-	Id      int    `json:"id"`
-	Pdf     string `json:"pdf"`
-	Status  string `json:"status"`
+	Cost    string      `json:"cost"`
+	Created string      `json:"created"`
+	Format  string      `json:"format"`
+	Id      json.Number `json:"id"`
+	Pdf     string      `json:"pdf"`
+	Status  string      `json:"status"`
 }
 
 type SendRes struct {

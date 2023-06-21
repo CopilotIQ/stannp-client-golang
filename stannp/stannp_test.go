@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 const ApiKeyEnvKey = "STANNP_API_KEY"
@@ -103,10 +104,14 @@ func TestSendLetter(t *testing.T) {
 	response, apiErr := TestClient.SendLetter(request)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 
+	dateString := time.Now().Format("2006-01-02")
+
+	assert.Equal(t, response.Data.Cost, "0.81")
+	assert.Equal(t, response.Data.Format, "US-LETTER")
+	assert.Equal(t, response.Data.Id.String(), "0")
+	assert.Equal(t, response.Data.Status, "test")
 	assert.True(t, response.Success)
-	assert.Equal(t, "0.81", response.Data.Cost)
-	assert.Equal(t, "US-LETTER", response.Data.Format)
-	assert.Equal(t, "test", response.Data.Status)
+	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
 	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
 }
 

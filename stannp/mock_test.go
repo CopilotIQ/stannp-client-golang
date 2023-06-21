@@ -138,7 +138,7 @@ func TestMockSendLetter(t *testing.T) {
 				assert.True(t, sendLetterRes.Data.Cost != "")
 				assert.True(t, sendLetterRes.Data.Created != "")
 				assert.True(t, sendLetterRes.Data.Format != "")
-				assert.True(t, sendLetterRes.Data.Id == 0)
+				assert.True(t, sendLetterRes.Data.Id == "0")
 				assert.True(t, sendLetterRes.Data.Pdf != "")
 				assert.True(t, sendLetterRes.Data.Status != "")
 			}

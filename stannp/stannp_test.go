@@ -1,6 +1,7 @@
 package stannp
 
 import (
+	"encoding/json"
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
@@ -145,5 +146,53 @@ func TestValidateAddress(t *testing.T) {
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.True(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)
+	})
+}
+
+func TestJSONValuesUnmarshalWithCorrectFlexibility(t *testing.T) {
+	t.Run("verify when Id is an int", func(t *testing.T) {
+		rawJSON := `
+{
+  "data": {
+    "cost": "10.99",
+    "created": "2023-06-22",
+    "format": "A4",
+    "id": 12345,
+    "pdf": "https://example.com/document.pdf",
+    "status": "completed"
+  },
+  "success": true
+}`
+		var letterRes letter.SendRes
+		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
+		assert.Nil(t, jsonErr)
+
+		int64Val, err := letterRes.Data.Id.Int64()
+		assert.Nil(t, err)
+		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, int64(12345), int64Val)
+	})
+	t.Run("verify when Id is a string", func(t *testing.T) {
+		rawJSON := `
+{
+  "data": {
+    "cost": "10.99",
+    "created": "2023-06-22",
+    "format": "A4",
+    "id": "12345",
+    "pdf": "https://example.com/document.pdf",
+    "status": "completed"
+  },
+  "success": true
+}`
+
+		var letterRes letter.SendRes
+		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
+		assert.Nil(t, jsonErr)
+
+		int64Val, err := letterRes.Data.Id.Int64()
+		assert.Nil(t, err)
+		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, int64(12345), int64Val)
 	})
 }

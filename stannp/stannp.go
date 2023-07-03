@@ -2,16 +2,17 @@ package stannp
 
 import (
 	"fmt"
-	"github.com/CopilotIQ/stannp-client-golang/address"
-	"github.com/CopilotIQ/stannp-client-golang/letter"
-	"github.com/CopilotIQ/stannp-client-golang/util"
-	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/CopilotIQ/stannp-client-golang/address"
+	"github.com/CopilotIQ/stannp-client-golang/letter"
+	"github.com/CopilotIQ/stannp-client-golang/util"
+	"github.com/google/uuid"
 )
 
 const BaseURL = "https://us.stannp.com/api/v1"
@@ -75,6 +76,12 @@ func WithDuplex(duplex bool) APIOption {
 func WithIdempotencyFunc(f IdempotencyFunc) APIOption {
 	return func(s *Stannp) {
 		s.idemFunc = f
+	}
+}
+
+func WithHTTPClient(hc *http.Client) APIOption {
+	return func(s *Stannp) {
+		s.client = hc
 	}
 }
 

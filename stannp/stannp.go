@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
+const PDFURLPrefix = "https://us.stannp.com/api/v1/storage"
 const BaseURL = "https://us.stannp.com/api/v1"
 const CreateURL = "create"
 const ValidateURL = "validate"
@@ -113,7 +114,7 @@ func (s *Stannp) IsTest() bool {
 func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	u, err := url.Parse(inputURL)
 	if err != nil {
-		return "", util.BuildError(500, fmt.Sprintf("error parsing inputURL [%s]", inputURL), false)
+		return "", util.BuildError(500, fmt.Sprintf("error parsing inputURL [%s]", inputURL))
 	}
 
 	q := u.Query()
@@ -130,7 +131,7 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 
 	req, err := http.NewRequest("POST", authURL, inputReader)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req), false)
+		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req))
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -141,10 +142,55 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error sending req [%+v]", req), false)
+		return nil, util.BuildError(500, fmt.Sprintf("error sending req [%+v]", req))
 	}
 
 	return res, nil
+}
+
+func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
+	if !strings.HasPrefix(urlInput, PDFURLPrefix) {
+		return nil, util.BuildError(400, fmt.Sprintf("urlInput must begin with [%s]. your input was [%s]", PDFURLPrefix, urlInput))
+	}
+
+	// Build fileName from fullPath
+	fileURL, err := url.Parse(urlInput)
+	if err != nil {
+		log.Fatal(err)
+	}
+	path := fileURL.Path
+	values := fileURL.Query()
+	segments := strings.Split(path, "/")
+	fileName := segments[len(segments)-1]
+
+	client := http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			r.URL.Opaque = r.URL.Path
+			return nil
+		},
+	}
+
+	resp, err := client.Get(urlInput)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var bb []byte
+	size, err := resp.Body.Read(bb)
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	return &letter.PDFRes{
+		Bytes: bb,
+		Len:   size,
+		Name:  fileName,
+	}, nil
 }
 
 func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError) {

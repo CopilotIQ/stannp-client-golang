@@ -18,11 +18,11 @@ func (apiError *APIError) String() string {
 	return fmt.Sprintf("Stannp Client API Error: Code [%d] Success [%t] Error [%s]", apiError.Code, apiError.Success, apiError.Error)
 }
 
-func BuildError(code int, errorMessage string, success bool) *APIError {
+func BuildError(code int, errorMessage string) *APIError {
 	return &APIError{
 		Code:    code,
 		Error:   errorMessage,
-		Success: success,
+		Success: false,
 	}
 }
 
@@ -44,12 +44,12 @@ func RandomString(n int) string {
 
 func ResToType(code int, reader io.Reader, successType interface{}) *APIError {
 	if code < http.StatusOK || (code < http.StatusBadRequest && code >= http.StatusMultipleChoices) {
-		return BuildError(500, fmt.Sprintf("unexpected status code [%d]", code), false)
+		return BuildError(500, fmt.Sprintf("unexpected status code [%d]", code))
 	}
 
 	resBody, err := io.ReadAll(reader)
 	if err != nil {
-		return BuildError(500, fmt.Sprintf("error reading response body [%+v] with err [%+v]", string(resBody), err), false)
+		return BuildError(500, fmt.Sprintf("error reading response body [%+v] with err [%+v]", string(resBody), err))
 	}
 
 	var jsonErr error
@@ -64,7 +64,7 @@ func ResToType(code int, reader io.Reader, successType interface{}) *APIError {
 	}
 
 	if jsonErr != nil {
-		return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)), false)
+		return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)))
 	}
 
 	if doReturnError {

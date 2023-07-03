@@ -2,6 +2,7 @@ package stannp
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
@@ -84,7 +85,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, 36, len(api.idemFunc()))
 }
 
-func TestSendLetter(t *testing.T) {
+func TestSendLetterAndDownloadPDF(t *testing.T) {
 	// Call SendLetter with a new instance of SendReq
 	request := &letter.SendReq{
 		Template: "307051",
@@ -107,13 +108,18 @@ func TestSendLetter(t *testing.T) {
 
 	dateString := time.Now().Format("2006-01-02")
 
-	assert.Equal(t, response.Data.Cost, "0.81")
+	assert.Equal(t, response.Data.Cost, "0.84")
 	assert.Equal(t, response.Data.Format, "US-LETTER")
 	assert.Equal(t, response.Data.Id.String(), "0")
 	assert.Equal(t, response.Data.Status, "test")
 	assert.True(t, response.Success)
 	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
-	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
+	assert.True(t, strings.HasPrefix(response.Data.PDF, "https://us.stannp.com/api/v1/storage/get/"))
+
+	fmt.Println(fmt.Sprintf("response.Data.PDF is [%s]", response.Data.PDF))
+
+	pdfRes, apiErr := TestClient.DownloadPDF(response.Data.PDF)
+	fmt.Println(fmt.Sprintf("pdfRes is [%+v]", pdfRes))
 }
 
 func TestValidateAddress(t *testing.T) {

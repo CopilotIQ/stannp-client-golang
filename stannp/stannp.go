@@ -3,9 +3,11 @@ package stannp
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -159,7 +161,6 @@ func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 		log.Fatal(err)
 	}
 	path := fileURL.Path
-	values := fileURL.Query()
 	segments := strings.Split(path, "/")
 	fileName := segments[len(segments)-1]
 
@@ -175,8 +176,7 @@ func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 		log.Fatal(err)
 	}
 
-	var bb []byte
-	size, err := resp.Body.Read(bb)
+	byteArray, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())
 	}
@@ -187,10 +187,27 @@ func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 	}
 
 	return &letter.PDFRes{
-		Bytes: bb,
-		Len:   size,
+		Bytes: byteArray,
+		Len:   len(byteArray),
 		Name:  fileName,
 	}, nil
+}
+
+func (s *Stannp) BytesToPDF(data []byte) (*os.File, error) {
+	tmpFile, err := ioutil.TempFile("", "example.*.pdf")
+	if err != nil {
+		return nil, err
+	}
+
+	if _, writeErr := tmpFile.Write(data); writeErr != nil {
+		closeErr := tmpFile.Close()
+		if closeErr != nil {
+			return nil, closeErr
+		}
+		return nil, writeErr
+	}
+
+	return tmpFile, nil
 }
 
 func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError) {

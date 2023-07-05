@@ -80,6 +80,12 @@ func WithIdempotencyFunc(f IdempotencyFunc) APIOption {
 	}
 }
 
+func WithHTTPClient(hc *http.Client) APIOption {
+	return func(s *Stannp) {
+		s.client = hc
+	}
+}
+
 func New(options ...APIOption) *Stannp {
 	api := &Stannp{
 		apiKey:         "test123456",

@@ -2,11 +2,13 @@ package stannp
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
@@ -87,7 +89,7 @@ func TestNew(t *testing.T) {
 func TestSendLetter(t *testing.T) {
 	// Call SendLetter with a new instance of SendReq
 	request := &letter.SendReq{
-		Template: "305202",
+		Template: "307051",
 		Recipient: letter.RecipientDetails{
 			Address1:  "9355 Burton Way",
 			Address2:  "Courthouse",
@@ -105,10 +107,14 @@ func TestSendLetter(t *testing.T) {
 	response, apiErr := TestClient.SendLetter(context.Background(), request)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 
+	dateString := time.Now().Format("2006-01-02")
+
+	assert.Equal(t, response.Data.Cost, "0.81")
+	assert.Equal(t, response.Data.Format, "US-LETTER")
+	assert.Equal(t, response.Data.Id.String(), "0")
+	assert.Equal(t, response.Data.Status, "test")
 	assert.True(t, response.Success)
-	assert.Equal(t, "0.81", response.Data.Cost)
-	assert.Equal(t, "US-LETTER", response.Data.Format)
-	assert.Equal(t, "test", response.Data.Status)
+	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
 	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
 }
 
@@ -142,5 +148,53 @@ func TestValidateAddress(t *testing.T) {
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.True(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)
+	})
+}
+
+func TestJSONValuesUnmarshalWithCorrectFlexibility(t *testing.T) {
+	t.Run("verify when Id is an int", func(t *testing.T) {
+		rawJSON := `
+{
+  "data": {
+    "cost": "10.99",
+    "created": "2023-06-22",
+    "format": "A4",
+    "id": 12345,
+    "pdf": "https://example.com/document.pdf",
+    "status": "completed"
+  },
+  "success": true
+}`
+		var letterRes letter.SendRes
+		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
+		assert.Nil(t, jsonErr)
+
+		int64Val, err := letterRes.Data.Id.Int64()
+		assert.Nil(t, err)
+		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, int64(12345), int64Val)
+	})
+	t.Run("verify when Id is a string", func(t *testing.T) {
+		rawJSON := `
+{
+  "data": {
+    "cost": "10.99",
+    "created": "2023-06-22",
+    "format": "A4",
+    "id": "12345",
+    "pdf": "https://example.com/document.pdf",
+    "status": "completed"
+  },
+  "success": true
+}`
+
+		var letterRes letter.SendRes
+		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
+		assert.Nil(t, jsonErr)
+
+		int64Val, err := letterRes.Data.Id.Int64()
+		assert.Nil(t, err)
+		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, int64(12345), int64Val)
 	})
 }

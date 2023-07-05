@@ -150,6 +150,23 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 	return res, nil
 }
 
+func (s *Stannp) BytesToPDF(data []byte) (*os.File, *util.APIError) {
+	tmpFile, err := ioutil.TempFile("", "example.*.pdf")
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	if _, writeErr := tmpFile.Write(data); writeErr != nil {
+		closeErr := tmpFile.Close()
+		if closeErr != nil {
+			return nil, util.BuildError(500, closeErr.Error())
+		}
+		return nil, util.BuildError(500, writeErr.Error())
+	}
+
+	return tmpFile, nil
+}
+
 func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 	if !strings.HasPrefix(urlInput, PDFURLPrefix) {
 		return nil, util.BuildError(400, fmt.Sprintf("urlInput must begin with [%s]. your input was [%s]", PDFURLPrefix, urlInput))
@@ -191,23 +208,6 @@ func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 		Len:   len(byteArray),
 		Name:  fileName,
 	}, nil
-}
-
-func (s *Stannp) BytesToPDF(data []byte) (*os.File, error) {
-	tmpFile, err := ioutil.TempFile("", "example.*.pdf")
-	if err != nil {
-		return nil, err
-	}
-
-	if _, writeErr := tmpFile.Write(data); writeErr != nil {
-		closeErr := tmpFile.Close()
-		if closeErr != nil {
-			return nil, closeErr
-		}
-		return nil, writeErr
-	}
-
-	return tmpFile, nil
 }
 
 func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError) {

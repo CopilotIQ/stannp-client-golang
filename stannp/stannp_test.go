@@ -119,7 +119,7 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	pdfRes, apiErr := TestClient.DownloadPDF(response.Data.PDF)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 	fileRes, fileErr := TestClient.BytesToPDF(pdfRes.Bytes)
-	assert.Nil(t, fileErr)
+	assert.True(t, reflect.ValueOf(fileErr).IsNil())
 	defer os.Remove(fileRes.Name()) // clean up
 
 	// Read the file's content

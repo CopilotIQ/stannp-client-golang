@@ -9,7 +9,7 @@ type Data struct {
 	Created string      `json:"created"`
 	Format  string      `json:"format"`
 	Id      json.Number `json:"id"`
-	PDF     string      `json:"pdf"`
+	PDFURL  string      `json:"pdf"`
 	Status  string      `json:"status"`
 }
 

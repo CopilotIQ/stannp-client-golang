@@ -114,9 +114,9 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	assert.Equal(t, response.Data.Status, "test")
 	assert.True(t, response.Success)
 	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
-	assert.True(t, strings.HasPrefix(response.Data.PDF, "https://us.stannp.com/api/v1/storage/get/"))
+	assert.True(t, strings.HasPrefix(response.Data.PDFURL, "https://us.stannp.com/api/v1/storage/get/"))
 
-	pdfRes, apiErr := TestClient.DownloadPDF(response.Data.PDF)
+	pdfRes, apiErr := TestClient.DownloadPDF(response.Data.PDFURL)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 	fileRes, fileErr := TestClient.BytesToPDF(pdfRes.Bytes)
 	assert.True(t, reflect.ValueOf(fileErr).IsNil())

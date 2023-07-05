@@ -249,7 +249,7 @@ func TestMockSendLetter(t *testing.T) {
 				assert.True(t, sendLetterRes.Data.Created != "")
 				assert.True(t, sendLetterRes.Data.Format != "")
 				assert.True(t, sendLetterRes.Data.Id == "0")
-				assert.True(t, sendLetterRes.Data.PDF != "")
+				assert.True(t, sendLetterRes.Data.PDFURL != "")
 				assert.True(t, sendLetterRes.Data.Status != "")
 			}
 		})

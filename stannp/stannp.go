@@ -167,13 +167,12 @@ func (s *Stannp) BytesToPDF(data []byte) (*os.File, *util.APIError) {
 	return tmpFile, nil
 }
 
-func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
-	if !strings.HasPrefix(urlInput, PDFURLPrefix) {
-		return nil, util.BuildError(400, fmt.Sprintf("urlInput must begin with [%s]. your input was [%s]", PDFURLPrefix, urlInput))
+func (s *Stannp) DownloadPDF(pdfURL string) (*letter.PDFRes, *util.APIError) {
+	if !strings.HasPrefix(pdfURL, PDFURLPrefix) {
+		return nil, util.BuildError(400, fmt.Sprintf("pdfURL must begin with [%s]. your input was [%s]", PDFURLPrefix, pdfURL))
 	}
 
-	// Build fileName from fullPath
-	fileURL, err := url.Parse(urlInput)
+	fileURL, err := url.Parse(pdfURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -188,7 +187,7 @@ func (s *Stannp) DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError) {
 		},
 	}
 
-	resp, err := client.Get(urlInput)
+	resp, err := client.Get(pdfURL)
 	if err != nil {
 		log.Fatal(err)
 	}

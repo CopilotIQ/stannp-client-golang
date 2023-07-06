@@ -167,50 +167,32 @@ func (s *Stannp) BytesToPDF(data []byte) (*os.File, *util.APIError) {
 	return tmpFile, nil
 }
 
-func (s *Stannp) DownloadPDF(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
+func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
 	if !strings.HasPrefix(pdfURL, PDFURLPrefix) {
 		return nil, util.BuildError(400, fmt.Sprintf("pdfURL must begin with [%s]. your input was [%s]", PDFURLPrefix, pdfURL))
 	}
 
 	fileURL, err := url.Parse(pdfURL)
 	if err != nil {
-		log.Fatal(err)
+		return nil, util.BuildError(500, err.Error())
 	}
 	path := fileURL.Path
-	segments := strings.Split(path, "/")
-	fileName := segments[len(segments)-1]
-
-	client := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			r.URL.Opaque = r.URL.Path
-			return nil
-		},
-	}
+	urlSegments := strings.Split(path, "/")
+	fileName := urlSegments[len(urlSegments)-1]
 
 	pdfGetReq, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, pdfURL, nil)
 	if reqErr != nil {
 		return nil, util.BuildError(500, reqErr.Error())
 	}
 
-	resp, err := client.Do(pdfGetReq)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	byteArray, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, util.BuildError(500, err.Error())
-	}
-
-	err = resp.Body.Close()
+	resp, err := s.client.Do(pdfGetReq)
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())
 	}
 
 	return &letter.PDFRes{
-		Bytes: byteArray,
-		Len:   len(byteArray),
-		Name:  fileName,
+		Contents: resp.Body,
+		Name:     fileName,
 	}, nil
 }
 

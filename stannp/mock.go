@@ -1,7 +1,9 @@
 package stannp
 
 import (
+	"bytes"
 	"context"
+	"io"
 
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
@@ -12,7 +14,7 @@ import (
 // Client interface is for mocking / testing. Implement it however you wish!
 type Client interface {
 	BytesToPDF(data []byte) (*os.File, *util.APIError)
-	DownloadPDF(ctx context.Context, urlInput string) (*letter.PDFRes, *util.APIError)
+	GetPDFContents(ctx context.Context, urlInput string) (*letter.PDFRes, *util.APIError)
 	SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError)
 	ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
 }
@@ -100,7 +102,7 @@ func (mc *MockClient) BytesToPDF(_ []byte) (*os.File, *util.APIError) {
 	return &os.File{}, nil
 }
 
-func (mc *MockClient) DownloadPDF(_ context.Context, _ string) (*letter.PDFRes, *util.APIError) {
+func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
 	if mc.downloadPDFFailNext {
 		apiErr := util.BuildError(500, "downloadPDFFailNext is true")
 
@@ -116,9 +118,8 @@ func (mc *MockClient) DownloadPDF(_ context.Context, _ string) (*letter.PDFRes, 
 	}
 
 	return &letter.PDFRes{
-		Bytes: []byte("hi sean"),
-		Len:   len([]byte("hi sean")),
-		Name:  "hi sean.pdf",
+		Contents: io.NopCloser(bytes.NewBufferString(pdfURL)), // give the caller something to read if they want to
+		Name:     "hi sean.pdf",
 	}, nil
 }
 

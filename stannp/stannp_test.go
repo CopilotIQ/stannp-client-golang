@@ -7,6 +7,7 @@ import (
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
+	"io"
 	"log"
 	"os"
 	"reflect"
@@ -116,9 +117,16 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
 	assert.True(t, strings.HasPrefix(response.Data.PDFURL, "https://us.stannp.com/api/v1/storage/get/"))
 
-	pdfRes, apiErr := TestClient.DownloadPDF(context.Background(), response.Data.PDFURL)
+	pdfRes, apiErr := TestClient.GetPDFContents(context.Background(), response.Data.PDFURL)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
-	fileRes, fileErr := TestClient.BytesToPDF(pdfRes.Bytes)
+
+	byteArray, err := io.ReadAll(pdfRes.Contents)
+	assert.Nil(t, err)
+
+	err = pdfRes.Contents.Close()
+	assert.Nil(t, err)
+
+	fileRes, fileErr := TestClient.BytesToPDF(byteArray)
 	assert.True(t, reflect.ValueOf(fileErr).IsNil())
 	defer func() {
 		removeErr := os.Remove(fileRes.Name())
@@ -128,12 +136,10 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	}()
 
 	content, err := os.ReadFile(fileRes.Name())
-	if err != nil {
-		t.Fatalf("ReadFile failed: %s", err)
-	}
+	assert.Nil(t, err)
 
 	// Compare the length of the original data with the read content
-	assert.Equal(t, pdfRes.Len, len(content))
+	assert.Equal(t, len(byteArray), len(content))
 }
 
 func TestValidateAddress(t *testing.T) {

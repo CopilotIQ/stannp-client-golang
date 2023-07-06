@@ -1,6 +1,9 @@
 package letter
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 const URL = "letters"
 
@@ -14,9 +17,8 @@ type Data struct {
 }
 
 type PDFRes struct {
-	Bytes []byte
-	Len   int
-	Name  string
+	Contents io.ReadCloser
+	Name     string
 }
 
 type RecipientDetails struct {

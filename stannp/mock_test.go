@@ -2,6 +2,7 @@ package stannp
 
 import (
 	"context"
+	"io"
 	"reflect"
 	"testing"
 
@@ -183,7 +184,8 @@ func TestMockDownloadPDF(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			downloadPDFRes, apiErr := mockClient.DownloadPDF(context.Background(), util.RandomString(10))
+			URL := util.RandomString(10)
+			downloadPDFRes, apiErr := mockClient.GetPDFContents(context.Background(), URL)
 
 			if tt.expectedError != nil {
 				assert.NotNil(t, apiErr)
@@ -194,9 +196,14 @@ func TestMockDownloadPDF(t *testing.T) {
 				assert.NotNil(t, downloadPDFRes)
 
 				assert.Equal(t, downloadPDFRes.Name, "hi sean.pdf")
-				//goland:noinspection GoRedundantConversion
-				assert.Equal(t, string(downloadPDFRes.Bytes), string([]byte("hi sean")))
-				assert.Equal(t, downloadPDFRes.Len, len([]byte("hi sean")))
+
+				byteArray, err := io.ReadAll(downloadPDFRes.Contents)
+				assert.Nil(t, err)
+
+				err = downloadPDFRes.Contents.Close()
+				assert.Nil(t, err)
+
+				assert.Equal(t, len([]byte(URL)), len(byteArray))
 			}
 		})
 	}

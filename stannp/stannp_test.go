@@ -7,7 +7,6 @@ import (
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
-	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
@@ -121,9 +120,14 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 	fileRes, fileErr := TestClient.BytesToPDF(pdfRes.Bytes)
 	assert.True(t, reflect.ValueOf(fileErr).IsNil())
-	defer os.Remove(fileRes.Name())
+	defer func() {
+		removeErr := os.Remove(fileRes.Name())
+		if removeErr != nil {
+			t.FailNow()
+		}
+	}()
 
-	content, err := ioutil.ReadFile(fileRes.Name())
+	content, err := os.ReadFile(fileRes.Name())
 	if err != nil {
 		t.Fatalf("ReadFile failed: %s", err)
 	}

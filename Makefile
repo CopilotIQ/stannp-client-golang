@@ -1,4 +1,4 @@
-all: format build test
+all: tidy format build test
 
 build:
 	go build -ldflags="-s -w" ./...
@@ -8,3 +8,6 @@ format:
 
 test:
 	go test -v ./...
+
+tidy:
+	go mod tidy

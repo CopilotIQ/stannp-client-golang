@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -152,7 +151,7 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL strin
 }
 
 func (s *Stannp) BytesToPDF(data []byte) (*os.File, *util.APIError) {
-	tmpFile, err := ioutil.TempFile("", "example.*.pdf")
+	tmpFile, err := os.CreateTemp("", "example.*.pdf")
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())
 	}
@@ -198,7 +197,7 @@ func (s *Stannp) DownloadPDF(ctx context.Context, pdfURL string) (*letter.PDFRes
 		log.Fatal(err)
 	}
 
-	byteArray, err := ioutil.ReadAll(resp.Body)
+	byteArray, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())
 	}

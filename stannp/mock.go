@@ -26,7 +26,7 @@ type MockClient struct {
 	bytesToPDFFailNext  bool
 	codeNext            int
 	downloadPDFFailNext bool
-	errNext             string
+	errorMessageNext    string
 	invalidNext         bool
 	letterFailNext      bool
 }
@@ -57,9 +57,9 @@ func WithDownloadPDFFailNext(failNext bool) MockOption {
 	}
 }
 
-func WithErrNext(errNext string) MockOption {
+func WithErrorMessageNext(errNext string) MockOption {
 	return func(c *MockClient) {
-		c.errNext = errNext
+		c.errorMessageNext = errNext
 	}
 }
 
@@ -93,8 +93,8 @@ func (mc *MockClient) BytesToPDF(_ []byte) (*os.File, *util.APIError) {
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr
@@ -110,8 +110,8 @@ func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr
@@ -131,8 +131,8 @@ func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr
@@ -159,8 +159,8 @@ func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq)
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr

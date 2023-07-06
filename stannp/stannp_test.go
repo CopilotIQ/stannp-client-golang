@@ -56,7 +56,7 @@ func TestNew(t *testing.T) {
 	// Load .env file
 	err := godotenv.Load("../.env")
 	if err != nil {
-		t.Fatal("Error loading .env file")
+		t.Fatal("error loading .env file")
 	}
 
 	// Get API key from environment variable

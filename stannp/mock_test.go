@@ -51,11 +51,11 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{downloadPDFFailNext: true},
 		},
 		{
-			name: "with errNext",
+			name: "with errorMessageNext",
 			opts: []MockOption{
-				WithErrNext("error"),
+				WithErrorMessageNext("error"),
 			},
-			expect: MockClient{errNext: "error"},
+			expect: MockClient{errorMessageNext: "error"},
 		},
 		{
 			name: "with invalidNext",
@@ -78,7 +78,7 @@ func TestNewMockClient(t *testing.T) {
 				WithBytesToPDFFailNext(true),
 				WithCodeNext(400),
 				WithDownloadPDFFailNext(true),
-				WithErrNext("simulated error"),
+				WithErrorMessageNext("simulated error"),
 				WithInvalidNext(true),
 				WithLetterFailNext(true),
 			},
@@ -87,7 +87,7 @@ func TestNewMockClient(t *testing.T) {
 				bytesToPDFFailNext:  true,
 				codeNext:            400,
 				downloadPDFFailNext: true,
-				errNext:             "simulated error",
+				errorMessageNext:    "simulated error",
 				invalidNext:         true,
 				letterFailNext:      true,
 			},
@@ -125,7 +125,7 @@ func TestMockBytesToPDF(t *testing.T) {
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
-				WithErrNext("custom message"),
+				WithErrorMessageNext("custom message"),
 				WithBytesToPDFFailNext(true),
 			},
 			expectedSuccess: false,
@@ -173,7 +173,7 @@ func TestMockDownloadPDF(t *testing.T) {
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
-				WithErrNext("custom message"),
+				WithErrorMessageNext("custom message"),
 				WithDownloadPDFFailNext(true),
 			},
 			expectedSuccess: false,
@@ -232,7 +232,7 @@ func TestMockSendLetter(t *testing.T) {
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
-				WithErrNext("custom message"),
+				WithErrorMessageNext("custom message"),
 				WithLetterFailNext(true),
 			},
 			expectedSuccess: false,
@@ -296,7 +296,7 @@ func TestMockValidateAddress(t *testing.T) {
 			mockClientOptions: []MockOption{
 				WithAddressFailNext(true),
 				WithCodeNext(400),
-				WithErrNext("custom message"),
+				WithErrorMessageNext("custom message"),
 			},
 			isValidExpected: false,
 			errExpected:     util.BuildError(400, "custom message"),

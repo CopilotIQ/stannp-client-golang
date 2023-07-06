@@ -9,20 +9,24 @@ import (
 )
 
 type APIError struct {
-	Code    int    `json:"code"`
-	Error   string `json:"error"`
-	Success bool   `json:"success"`
+	Code         int    `json:"code"`
+	ErrorMessage string `json:"error"`
+	Success      bool   `json:"success"`
+}
+
+func (apiError *APIError) Error() string {
+	return fmt.Sprintf("Code [%d] ErrorMessage [%s] Success [%t]", apiError.Code, apiError.ErrorMessage, apiError.Success)
 }
 
 func (apiError *APIError) String() string {
-	return fmt.Sprintf("Stannp Client API Error: Code [%d] Success [%t] Error [%s]", apiError.Code, apiError.Success, apiError.Error)
+	return fmt.Sprintf("Stannp Client API ErrorMessage: Code [%d] Success [%t] ErrorMessage [%s]", apiError.Code, apiError.Success, apiError.ErrorMessage)
 }
 
 func BuildError(code int, errorMessage string) *APIError {
 	return &APIError{
-		Code:    code,
-		Error:   errorMessage,
-		Success: false,
+		Code:         code,
+		ErrorMessage: errorMessage,
+		Success:      false,
 	}
 }
 

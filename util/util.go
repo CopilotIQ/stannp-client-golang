@@ -19,7 +19,7 @@ func (apiError *APIError) Error() string {
 }
 
 func (apiError *APIError) String() string {
-	return fmt.Sprintf("Stannp Client API ErrorMessage: Code [%d] Success [%t] ErrorMessage [%s]", apiError.Code, apiError.Success, apiError.ErrorMessage)
+	return fmt.Sprintf("Stannp Client APIError: Code [%d] Success [%t] ErrorMessage [%s]", apiError.Code, apiError.Success, apiError.ErrorMessage)
 }
 
 func BuildError(code int, errorMessage string) *APIError {
@@ -57,11 +57,9 @@ func ResToType(code int, reader io.Reader, successType interface{}) *APIError {
 	}
 
 	var jsonErr error
-	var doReturnError bool
-	var serverErr APIError
+	var serverErr *APIError
 	if code >= http.StatusBadRequest {
-		doReturnError = true
-		jsonErr = json.Unmarshal(resBody, &serverErr)
+		jsonErr = json.Unmarshal(resBody, serverErr)
 		serverErr.Code = code
 	} else {
 		jsonErr = json.Unmarshal(resBody, &successType)
@@ -71,9 +69,5 @@ func ResToType(code int, reader io.Reader, successType interface{}) *APIError {
 		return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)))
 	}
 
-	if doReturnError {
-		return &serverErr
-	}
-
-	return nil
+	return serverErr
 }

@@ -1,6 +1,8 @@
 package stannp
 
 import (
+	"context"
+
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
@@ -8,8 +10,8 @@ import (
 
 // Client interface is for mocking / testing. Implement it however you wish!
 type Client interface {
-	SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError)
-	ValidateAddress(request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
+	SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError)
+	ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
 }
 
 type MockOption func(*MockClient)
@@ -21,6 +23,8 @@ type MockClient struct {
 	addressFailNext bool
 	letterFailNext  bool
 }
+
+var _ Client = (*MockClient)(nil)
 
 func WithAddressFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
@@ -62,7 +66,7 @@ func NewMockClient(opts ...MockOption) *MockClient {
 	return client
 }
 
-func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIError) {
+func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {
 	if mc.letterFailNext {
 		apiErr := &util.APIError{
 			Code:    500,
@@ -94,7 +98,7 @@ func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIE
 	}, nil
 }
 
-func (mc *MockClient) ValidateAddress(_ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
+func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
 	if mc.addressFailNext {
 		apiErr := &util.APIError{
 			Code:    500,

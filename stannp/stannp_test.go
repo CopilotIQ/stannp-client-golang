@@ -1,17 +1,19 @@
 package stannp
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/CopilotIQ/stannp-client-golang/address"
-	"github.com/CopilotIQ/stannp-client-golang/letter"
-	"github.com/jgroeneveld/trial/assert"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/CopilotIQ/stannp-client-golang/address"
+	"github.com/CopilotIQ/stannp-client-golang/letter"
+	"github.com/jgroeneveld/trial/assert"
+	"github.com/joho/godotenv"
 )
 
 const ApiKeyEnvKey = "STANNP_API_KEY"
@@ -102,7 +104,7 @@ func TestSendLetter(t *testing.T) {
 	}
 
 	// Note: This call is not actually sending a request.
-	response, apiErr := TestClient.SendLetter(request)
+	response, apiErr := TestClient.SendLetter(context.Background(), request)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 
 	dateString := time.Now().Format("2006-01-02")
@@ -127,7 +129,7 @@ func TestValidateAddress(t *testing.T) {
 			Zipcode:  "90210",
 		}
 
-		validateRes, apiErr := TestClient.ValidateAddress(request)
+		validateRes, apiErr := TestClient.ValidateAddress(context.Background(), request)
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.False(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)
@@ -142,7 +144,7 @@ func TestValidateAddress(t *testing.T) {
 			Zipcode:  "90210",
 		}
 
-		validateRes, apiErr := TestClient.ValidateAddress(request)
+		validateRes, apiErr := TestClient.ValidateAddress(context.Background(), request)
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.True(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)

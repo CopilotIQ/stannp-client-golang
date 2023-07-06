@@ -1,12 +1,14 @@
 package stannp
 
 import (
+	"context"
+	"reflect"
+	"testing"
+
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
 	"github.com/jgroeneveld/trial/assert"
-	"reflect"
-	"testing"
 )
 
 func TestNewMockClient(t *testing.T) {
@@ -123,7 +125,7 @@ func TestMockSendLetter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			sendLetterRes, apiErr := mockClient.SendLetter(&letter.SendReq{})
+			sendLetterRes, apiErr := mockClient.SendLetter(context.Background(), &letter.SendReq{})
 
 			if tt.expectedError != nil {
 				assert.NotNil(t, apiErr)
@@ -194,7 +196,7 @@ func TestMockValidateAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			validateAddressRes, apiErr := mockClient.ValidateAddress(&address.ValidateReq{})
+			validateAddressRes, apiErr := mockClient.ValidateAddress(context.Background(), &address.ValidateReq{})
 
 			if tt.errExpected != nil {
 				assert.NotNil(t, apiErr)

@@ -1,6 +1,7 @@
 package stannp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -122,13 +123,13 @@ func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	return u.String(), nil
 }
 
-func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *util.APIError) {
+func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL string) (*http.Response, *util.APIError) {
 	authURL, wrapErr := s.wrapAuth(inputURL)
 	if wrapErr != nil {
 		return nil, wrapErr
 	}
 
-	req, err := http.NewRequest("POST", authURL, inputReader)
+	req, err := http.NewRequestWithContext(ctx, "POST", authURL, inputReader)
 	if err != nil {
 		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req), false)
 	}
@@ -147,7 +148,7 @@ func (s *Stannp) post(inputReader io.Reader, inputURL string) (*http.Response, *
 	return res, nil
 }
 
-func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError) {
+func (s *Stannp) SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError) {
 	formData := url.Values{}
 	formData.Set("clearzone", strconv.FormatBool(s.clearZone))
 	formData.Set("duplex", strconv.FormatBool(s.duplex))
@@ -169,7 +170,7 @@ func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.API
 		formData.Set("recipient["+key+"]", value)
 	}
 
-	res, postErr := s.post(strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"))
+	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"))
 	if postErr != nil {
 		return nil, postErr
 	}
@@ -179,7 +180,7 @@ func (s *Stannp) SendLetter(request *letter.SendReq) (*letter.SendRes, *util.API
 	return &letterRes, resErr
 }
 
-func (s *Stannp) ValidateAddress(request *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
+func (s *Stannp) ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
 	// Create URL values
 	formData := url.Values{}
 	formData.Set("company", request.Company)
@@ -189,7 +190,7 @@ func (s *Stannp) ValidateAddress(request *address.ValidateReq) (*address.Validat
 	formData.Set("zipcode", request.Zipcode)
 	formData.Set("country", request.Country)
 
-	res, postErr := s.post(strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, address.URL, ValidateURL}, "/"))
+	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, address.URL, ValidateURL}, "/"))
 	if postErr != nil {
 		return nil, postErr
 	}

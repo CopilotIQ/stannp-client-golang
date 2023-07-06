@@ -36,9 +36,10 @@ type RecipientDetails struct {
 type MergeVariables map[string]string
 
 type SendReq struct {
-	MergeVariables MergeVariables   `json:"mergeVariables"`
-	Recipient      RecipientDetails `json:"recipient"`
-	Template       string           `json:"template"`
+	IdempotenceyKey string           `json:"idempotenceyKey"`
+	MergeVariables  MergeVariables   `json:"mergeVariables"`
+	Recipient       RecipientDetails `json:"recipient"`
+	Template        string           `json:"template"`
 }
 
 type SendRes struct {

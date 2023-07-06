@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,24 +13,15 @@ import (
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
-	"github.com/google/uuid"
 )
 
+const ContentTypeHeaderKey = "Content-Type"
+const URLEncodedHeaderValue = "application/x-www-form-urlencoded"
+const XIdempotenceyHeaderKey = "X-Idempotency-Key"
 const PDFURLPrefix = "https://us.stannp.com/api/v1/storage"
 const BaseURL = "https://us.stannp.com/api/v1"
 const CreateURL = "create"
 const ValidateURL = "validate"
-
-type IdempotencyFunc func() string
-
-var DefaultIdemFunc = func() string {
-	guid, uuidErr := uuid.NewUUID()
-	if uuidErr != nil {
-		log.Fatalf("cannot generate UUID [%+v]", uuidErr)
-	}
-
-	return guid.String()
-}
 
 type Stannp struct {
 	apiKey         string
@@ -39,7 +29,6 @@ type Stannp struct {
 	clearZone      bool
 	client         *http.Client
 	duplex         bool
-	idemFunc       IdempotencyFunc
 	postUnverified bool
 	test           bool
 }
@@ -73,12 +62,6 @@ func WithClearZone(clearZone bool) APIOption {
 func WithDuplex(duplex bool) APIOption {
 	return func(s *Stannp) {
 		s.duplex = duplex
-	}
-}
-
-func WithIdempotencyFunc(f IdempotencyFunc) APIOption {
-	return func(s *Stannp) {
-		s.idemFunc = f
 	}
 }
 
@@ -125,7 +108,7 @@ func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	return u.String(), nil
 }
 
-func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL string) (*http.Response, *util.APIError) {
+func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idempotenceyKey string) (*http.Response, *util.APIError) {
 	authURL, wrapErr := s.wrapAuth(inputURL)
 	if wrapErr != nil {
 		return nil, wrapErr
@@ -136,10 +119,10 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL strin
 		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req))
 	}
 
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set(ContentTypeHeaderKey, URLEncodedHeaderValue)
 
-	if s.idemFunc != nil {
-		req.Header.Set("X-Idempotency-Key", s.idemFunc())
+	if idempotenceyKey != "" {
+		req.Header.Set(XIdempotenceyHeaderKey, idempotenceyKey)
 	}
 
 	res, err := s.client.Do(req)
@@ -220,7 +203,7 @@ func (s *Stannp) SendLetter(ctx context.Context, request *letter.SendReq) (*lett
 		formData.Set("recipient["+key+"]", value)
 	}
 
-	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"))
+	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, letter.URL, CreateURL}, "/"), request.IdempotenceyKey)
 	if postErr != nil {
 		return nil, postErr
 	}
@@ -240,7 +223,7 @@ func (s *Stannp) ValidateAddress(ctx context.Context, request *address.ValidateR
 	formData.Set("zipcode", request.Zipcode)
 	formData.Set("country", request.Country)
 
-	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, address.URL, ValidateURL}, "/"))
+	res, postErr := s.post(ctx, strings.NewReader(formData.Encode()), strings.Join([]string{s.baseUrl, address.URL, ValidateURL}, "/"), "")
 	if postErr != nil {
 		return nil, postErr
 	}

@@ -1,6 +1,7 @@
 package stannp
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
@@ -103,7 +104,7 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	}
 
 	// Note: This call is not actually sending a request.
-	response, apiErr := TestClient.SendLetter(request)
+	response, apiErr := TestClient.SendLetter(context.Background(), request)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 
 	dateString := time.Now().Format("2006-01-02")
@@ -116,13 +117,12 @@ func TestSendLetterAndDownloadPDFAndBytesToPDF(t *testing.T) {
 	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
 	assert.True(t, strings.HasPrefix(response.Data.PDFURL, "https://us.stannp.com/api/v1/storage/get/"))
 
-	pdfRes, apiErr := TestClient.DownloadPDF(response.Data.PDFURL)
+	pdfRes, apiErr := TestClient.DownloadPDF(context.Background(), response.Data.PDFURL)
 	assert.True(t, reflect.ValueOf(apiErr).IsNil())
 	fileRes, fileErr := TestClient.BytesToPDF(pdfRes.Bytes)
 	assert.True(t, reflect.ValueOf(fileErr).IsNil())
-	defer os.Remove(fileRes.Name()) // clean up
+	defer os.Remove(fileRes.Name())
 
-	// Read the file's content
 	content, err := ioutil.ReadFile(fileRes.Name())
 	if err != nil {
 		t.Fatalf("ReadFile failed: %s", err)
@@ -143,7 +143,7 @@ func TestValidateAddress(t *testing.T) {
 			Zipcode:  "90210",
 		}
 
-		validateRes, apiErr := TestClient.ValidateAddress(request)
+		validateRes, apiErr := TestClient.ValidateAddress(context.Background(), request)
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.False(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)
@@ -158,7 +158,7 @@ func TestValidateAddress(t *testing.T) {
 			Zipcode:  "90210",
 		}
 
-		validateRes, apiErr := TestClient.ValidateAddress(request)
+		validateRes, apiErr := TestClient.ValidateAddress(context.Background(), request)
 		assert.True(t, reflect.ValueOf(apiErr).IsNil())
 		assert.True(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)

@@ -1,6 +1,8 @@
 package stannp
 
 import (
+	"context"
+
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
@@ -10,9 +12,9 @@ import (
 // Client interface is for mocking / testing. Implement it however you wish!
 type Client interface {
 	BytesToPDF(data []byte) (*os.File, *util.APIError)
-	DownloadPDF(urlInput string) (*letter.PDFRes, *util.APIError)
-	SendLetter(request *letter.SendReq) (*letter.SendRes, *util.APIError)
-	ValidateAddress(request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
+	DownloadPDF(ctx context.Context, urlInput string) (*letter.PDFRes, *util.APIError)
+	SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError)
+	ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
 }
 
 type MockOption func(*MockClient)
@@ -26,6 +28,8 @@ type MockClient struct {
 	invalidNext         bool
 	letterFailNext      bool
 }
+
+var _ Client = (*MockClient)(nil)
 
 func WithAddressFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
@@ -96,7 +100,7 @@ func (mc *MockClient) BytesToPDF(_ []byte) (*os.File, *util.APIError) {
 	return &os.File{}, nil
 }
 
-func (mc *MockClient) DownloadPDF(_ string) (*letter.PDFRes, *util.APIError) {
+func (mc *MockClient) DownloadPDF(_ context.Context, _ string) (*letter.PDFRes, *util.APIError) {
 	if mc.downloadPDFFailNext {
 		apiErr := util.BuildError(500, "downloadPDFFailNext is true")
 
@@ -118,7 +122,7 @@ func (mc *MockClient) DownloadPDF(_ string) (*letter.PDFRes, *util.APIError) {
 	}, nil
 }
 
-func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIError) {
+func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {
 	if mc.letterFailNext {
 		apiErr := util.BuildError(500, "letterFailNext is true")
 
@@ -146,7 +150,7 @@ func (mc *MockClient) SendLetter(_ *letter.SendReq) (*letter.SendRes, *util.APIE
 	}, nil
 }
 
-func (mc *MockClient) ValidateAddress(_ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
+func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
 	if mc.addressFailNext {
 		apiErr := util.BuildError(500, "addressFailNext is true")
 

@@ -1,12 +1,14 @@
 package stannp
 
 import (
+	"context"
+	"reflect"
+	"testing"
+
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
 	"github.com/jgroeneveld/trial/assert"
-	"reflect"
-	"testing"
 )
 
 func TestNewMockClient(t *testing.T) {
@@ -181,7 +183,7 @@ func TestMockDownloadPDF(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			downloadPDFRes, apiErr := mockClient.DownloadPDF(util.RandomString(10))
+			downloadPDFRes, apiErr := mockClient.DownloadPDF(context.Background(), util.RandomString(10))
 
 			if tt.expectedError != nil {
 				assert.NotNil(t, apiErr)
@@ -192,6 +194,7 @@ func TestMockDownloadPDF(t *testing.T) {
 				assert.NotNil(t, downloadPDFRes)
 
 				assert.Equal(t, downloadPDFRes.Name, "hi sean.pdf")
+				//goland:noinspection GoRedundantConversion
 				assert.Equal(t, string(downloadPDFRes.Bytes), string([]byte("hi sean")))
 				assert.Equal(t, downloadPDFRes.Len, len([]byte("hi sean")))
 			}
@@ -233,7 +236,7 @@ func TestMockSendLetter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			sendLetterRes, apiErr := mockClient.SendLetter(&letter.SendReq{})
+			sendLetterRes, apiErr := mockClient.SendLetter(context.Background(), &letter.SendReq{})
 
 			if tt.expectedError != nil {
 				assert.NotNil(t, apiErr)
@@ -296,7 +299,7 @@ func TestMockValidateAddress(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			validateAddressRes, apiErr := mockClient.ValidateAddress(&address.ValidateReq{})
+			validateAddressRes, apiErr := mockClient.ValidateAddress(context.Background(), &address.ValidateReq{})
 
 			if tt.errExpected != nil {
 				assert.NotNil(t, apiErr)

@@ -89,13 +89,13 @@ func TestPost(t *testing.T) {
 	inputReader := bytes.NewBufferString(inputBody)
 	idempotenceyKey := util.RandomString(10)
 	testURL := "/dashboard/u/1?docId=" + util.RandomString(10)
+	urlParts := strings.Split(testURL, "?")
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		urlParts := strings.Split(testURL, "?")
 		assert.Equal(t, http.MethodPost, r.Method)
 		// make sure the original query string parameters are preserved AND the api key is injected
-		assert.Equal(t, r.URL.String(), urlParts[0]+"?api_key="+apiKey+"&"+urlParts[1])
-		assert.True(t, reflect.DeepEqual(r.Header[ContentTypeHeaderKey], []string{URLEncodedHeaderValue}))
+		assert.Equal(t, r.URL.String(), urlParts[0]+"?"+APIKeyQSP+"="+apiKey+"&"+urlParts[1])
+		assert.True(t, reflect.DeepEqual(r.Header[ContentTypeHeaderKey], []string{URLEncodedHeaderVal}))
 		assert.True(t, reflect.DeepEqual(r.Header[XIdempotenceyHeaderKey], []string{idempotenceyKey}))
 
 		// in golang this closes the response writer automagically

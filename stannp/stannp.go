@@ -15,13 +15,14 @@ import (
 	"github.com/CopilotIQ/stannp-client-golang/util"
 )
 
-const ContentTypeHeaderKey = "Content-Type"
-const URLEncodedHeaderValue = "application/x-www-form-urlencoded"
-const XIdempotenceyHeaderKey = "X-Idempotency-Key"
-const PDFURLPrefix = "https://us.stannp.com/api/v1/storage"
+const APIKeyQSP = "api_key"
 const BaseURL = "https://us.stannp.com/api/v1"
+const ContentTypeHeaderKey = "Content-Type"
 const CreateURL = "create"
+const PDFURLPrefix = "https://us.stannp.com/api/v1/storage"
+const URLEncodedHeaderVal = "application/x-www-form-urlencoded"
 const ValidateURL = "validate"
+const XIdempotenceyHeaderKey = "X-Idempotency-Key"
 
 type Stannp struct {
 	apiKey         string
@@ -103,12 +104,12 @@ func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	}
 
 	q := u.Query()
-	q.Set("api_key", s.apiKey)
+	q.Set(APIKeyQSP, s.apiKey)
 	u.RawQuery = q.Encode()
 	return u.String(), nil
 }
 
-func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idempotenceyKey string) (*http.Response, *util.APIError) {
+func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idempotenceyHeaderVal string) (*http.Response, *util.APIError) {
 	authURL, wrapErr := s.wrapAuth(inputURL)
 	if wrapErr != nil {
 		return nil, wrapErr
@@ -119,10 +120,10 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idem
 		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req))
 	}
 
-	req.Header.Set(ContentTypeHeaderKey, URLEncodedHeaderValue)
+	req.Header.Set(ContentTypeHeaderKey, URLEncodedHeaderVal)
 
-	if idempotenceyKey != "" {
-		req.Header.Set(XIdempotenceyHeaderKey, idempotenceyKey)
+	if idempotenceyHeaderVal != "" {
+		req.Header.Set(XIdempotenceyHeaderKey, idempotenceyHeaderVal)
 	}
 
 	res, err := s.client.Do(req)

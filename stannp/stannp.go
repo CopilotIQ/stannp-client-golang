@@ -179,13 +179,13 @@ func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDF
 	}, nil
 }
 
-func (s *Stannp) SavePDFContents(data io.ReadCloser) (*os.File, *util.APIError) {
+func (s *Stannp) SavePDFContents(pdfContents io.ReadCloser) (*os.File, *util.APIError) {
 	tmpFile, err := os.CreateTemp("", "stannp_letter.*.pdf")
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())
 	}
 
-	_, copyErr := io.Copy(tmpFile, data)
+	_, copyErr := io.Copy(tmpFile, pdfContents)
 	if copyErr != nil {
 		removeErr := os.Remove(tmpFile.Name())
 		if removeErr != nil {

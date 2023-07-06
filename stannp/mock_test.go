@@ -136,7 +136,7 @@ func TestMockBytesToPDF(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := NewMockClient(tt.mockClientOptions...)
-			localFile, apiErr := mockClient.BytesToPDF([]byte(util.RandomString(10)))
+			localFile, apiErr := mockClient.SavePDFContents(nil)
 
 			if tt.expectedError != nil {
 				assert.NotNil(t, apiErr)
@@ -195,7 +195,7 @@ func TestMockDownloadPDF(t *testing.T) {
 				assert.True(t, reflect.ValueOf(apiErr).IsNil())
 				assert.NotNil(t, downloadPDFRes)
 
-				assert.Equal(t, downloadPDFRes.Name, "hi sean.pdf")
+				assert.Equal(t, downloadPDFRes.Name, URL)
 
 				byteArray, err := io.ReadAll(downloadPDFRes.Contents)
 				assert.Nil(t, err)

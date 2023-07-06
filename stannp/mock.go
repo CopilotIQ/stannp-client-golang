@@ -13,8 +13,8 @@ import (
 
 // Client interface is for mocking / testing. Implement it however you wish!
 type Client interface {
-	BytesToPDF(data []byte) (*os.File, *util.APIError)
 	GetPDFContents(ctx context.Context, urlInput string) (*letter.PDFRes, *util.APIError)
+	SavePDFContents(pdfContents io.ReadCloser) (*os.File, *util.APIError)
 	SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError)
 	ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
 }
@@ -85,23 +85,6 @@ func NewMockClient(opts ...MockOption) *MockClient {
 	return client
 }
 
-func (mc *MockClient) BytesToPDF(_ []byte) (*os.File, *util.APIError) {
-	if mc.bytesToPDFFailNext {
-		apiErr := util.BuildError(500, "bytesToPDFFailNext is true")
-
-		if mc.codeNext != 0 {
-			apiErr.Code = mc.codeNext
-		}
-
-		if mc.errorMessageNext != "" {
-			apiErr.ErrorMessage = mc.errorMessageNext
-		}
-
-		return nil, apiErr
-	}
-	return &os.File{}, nil
-}
-
 func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
 	if mc.downloadPDFFailNext {
 		apiErr := util.BuildError(500, "downloadPDFFailNext is true")
@@ -119,8 +102,25 @@ func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.
 
 	return &letter.PDFRes{
 		Contents: io.NopCloser(bytes.NewBufferString(pdfURL)), // give the caller something to read if they want to
-		Name:     "hi sean.pdf",
+		Name:     pdfURL,
 	}, nil
+}
+
+func (mc *MockClient) SavePDFContents(_ io.ReadCloser) (*os.File, *util.APIError) {
+	if mc.bytesToPDFFailNext {
+		apiErr := util.BuildError(500, "bytesToPDFFailNext is true")
+
+		if mc.codeNext != 0 {
+			apiErr.Code = mc.codeNext
+		}
+
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
+		}
+
+		return nil, apiErr
+	}
+	return &os.File{}, nil
 }
 
 func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {

@@ -150,23 +150,6 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL strin
 	return res, nil
 }
 
-func (s *Stannp) BytesToPDF(data []byte) (*os.File, *util.APIError) {
-	tmpFile, err := os.CreateTemp("", "example.*.pdf")
-	if err != nil {
-		return nil, util.BuildError(500, err.Error())
-	}
-
-	if _, writeErr := tmpFile.Write(data); writeErr != nil {
-		closeErr := tmpFile.Close()
-		if closeErr != nil {
-			return nil, util.BuildError(500, closeErr.Error())
-		}
-		return nil, util.BuildError(500, writeErr.Error())
-	}
-
-	return tmpFile, nil
-}
-
 func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
 	if !strings.HasPrefix(pdfURL, PDFURLPrefix) {
 		return nil, util.BuildError(400, fmt.Sprintf("pdfURL must begin with [%s]. your input was [%s]", PDFURLPrefix, pdfURL))
@@ -194,6 +177,25 @@ func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDF
 		Contents: resp.Body,
 		Name:     fileName,
 	}, nil
+}
+
+func (s *Stannp) SavePDFContents(data io.ReadCloser) (*os.File, *util.APIError) {
+	tmpFile, err := os.CreateTemp("", "stannp_letter.*.pdf")
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	_, copyErr := io.Copy(tmpFile, data)
+	if copyErr != nil {
+		removeErr := os.Remove(tmpFile.Name())
+		if removeErr != nil {
+			return nil, util.BuildError(500, removeErr.Error())
+		}
+
+		return nil, util.BuildError(500, copyErr.Error())
+	}
+
+	return tmpFile, nil
 }
 
 func (s *Stannp) SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError) {

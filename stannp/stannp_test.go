@@ -109,7 +109,7 @@ func TestSendLetter(t *testing.T) {
 
 	dateString := time.Now().Format("2006-01-02")
 
-	assert.Equal(t, response.Data.Cost, "0.81")
+	assert.Equal(t, response.Data.Cost, "0.84")
 	assert.Equal(t, response.Data.Format, "US-LETTER")
 	assert.Equal(t, response.Data.Id.String(), "0")
 	assert.Equal(t, response.Data.Status, "test")

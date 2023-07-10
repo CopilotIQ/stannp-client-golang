@@ -1,27 +1,34 @@
 package stannp
 
 import (
+	"bytes"
 	"context"
+	"io"
 
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
 	"github.com/CopilotIQ/stannp-client-golang/util"
+	"os"
 )
 
 // Client interface is for mocking / testing. Implement it however you wish!
 type Client interface {
-	SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError)
-	ValidateAddress(ctx context.Context, request *address.ValidateReq) (*address.ValidateRes, *util.APIError)
+	GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError)
+	SavePDFContents(pdfContents io.Reader) (*os.File, *util.APIError)
+	SendLetter(ctx context.Context, req *letter.SendReq) (*letter.SendRes, *util.APIError)
+	ValidateAddress(ctx context.Context, req *address.ValidateReq) (*address.ValidateRes, *util.APIError)
 }
 
 type MockOption func(*MockClient)
 
 type MockClient struct {
-	invalidNext     bool
-	codeNext        int
-	errNext         string
-	addressFailNext bool
-	letterFailNext  bool
+	addressFailNext     bool
+	bytesToPDFFailNext  bool
+	codeNext            int
+	downloadPDFFailNext bool
+	errorMessageNext    string
+	invalidNext         bool
+	letterFailNext      bool
 }
 
 var _ Client = (*MockClient)(nil)
@@ -32,15 +39,9 @@ func WithAddressFailNext(failNext bool) MockOption {
 	}
 }
 
-func WithLetterFailNext(failNext bool) MockOption {
+func WithBytesToPDFFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
-		c.letterFailNext = failNext
-	}
-}
-
-func WithInvalidNext(invalidNext bool) MockOption {
-	return func(c *MockClient) {
-		c.invalidNext = invalidNext
+		c.bytesToPDFFailNext = failNext
 	}
 }
 
@@ -50,9 +51,27 @@ func WithCodeNext(codeNext int) MockOption {
 	}
 }
 
-func WithErrNext(errNext string) MockOption {
+func WithDownloadPDFFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
-		c.errNext = errNext
+		c.downloadPDFFailNext = failNext
+	}
+}
+
+func WithErrorMessageNext(errNext string) MockOption {
+	return func(c *MockClient) {
+		c.errorMessageNext = errNext
+	}
+}
+
+func WithInvalidNext(invalidNext bool) MockOption {
+	return func(c *MockClient) {
+		c.invalidNext = invalidNext
+	}
+}
+
+func WithLetterFailNext(failNext bool) MockOption {
+	return func(c *MockClient) {
+		c.letterFailNext = failNext
 	}
 }
 
@@ -66,20 +85,54 @@ func NewMockClient(opts ...MockOption) *MockClient {
 	return client
 }
 
-func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {
-	if mc.letterFailNext {
-		apiErr := &util.APIError{
-			Code:    500,
-			Error:   "letterFailNext is true",
-			Success: false,
-		}
+func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
+	if mc.downloadPDFFailNext {
+		apiErr := util.BuildError(500, "downloadPDFFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
+		}
+
+		return nil, apiErr
+	}
+
+	return &letter.PDFRes{
+		Contents: io.NopCloser(bytes.NewBufferString(pdfURL)), // give the caller something to read if they want to
+		Name:     pdfURL,
+	}, nil
+}
+
+func (mc *MockClient) SavePDFContents(_ io.Reader) (*os.File, *util.APIError) {
+	if mc.bytesToPDFFailNext {
+		apiErr := util.BuildError(500, "bytesToPDFFailNext is true")
+
+		if mc.codeNext != 0 {
+			apiErr.Code = mc.codeNext
+		}
+
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
+		}
+
+		return nil, apiErr
+	}
+	return &os.File{}, nil
+}
+
+func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {
+	if mc.letterFailNext {
+		apiErr := util.BuildError(500, "letterFailNext is true")
+
+		if mc.codeNext != 0 {
+			apiErr.Code = mc.codeNext
+		}
+
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr
@@ -91,7 +144,7 @@ func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.
 			Created: util.RandomString(10),
 			Format:  util.RandomString(10),
 			Id:      "0",
-			Pdf:     util.RandomString(10),
+			PDFURL:  util.RandomString(10),
 			Status:  "received",
 		},
 		Success: true,
@@ -100,18 +153,14 @@ func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.
 
 func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
 	if mc.addressFailNext {
-		apiErr := &util.APIError{
-			Code:    500,
-			Error:   "addressFailNext is true",
-			Success: false,
-		}
+		apiErr := util.BuildError(500, "addressFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
 		}
 
-		if mc.errNext != "" {
-			apiErr.Error = mc.errNext
+		if mc.errorMessageNext != "" {
+			apiErr.ErrorMessage = mc.errorMessageNext
 		}
 
 		return nil, apiErr

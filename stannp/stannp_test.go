@@ -3,17 +3,17 @@ package stannp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/CopilotIQ/stannp-client-golang/address"
+	"github.com/CopilotIQ/stannp-client-golang/letter"
+	"github.com/jgroeneveld/trial/assert"
+	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/CopilotIQ/stannp-client-golang/address"
-	"github.com/CopilotIQ/stannp-client-golang/letter"
-	"github.com/jgroeneveld/trial/assert"
-	"github.com/joho/godotenv"
 )
 
 const ApiKeyEnvKey = "STANNP_API_KEY"
@@ -56,7 +56,7 @@ func TestNew(t *testing.T) {
 	// Load .env file
 	err := godotenv.Load("../.env")
 	if err != nil {
-		t.Fatal("Error loading .env file")
+		t.Fatal("error loading .env file")
 	}
 
 	// Get API key from environment variable
@@ -86,40 +86,62 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, 36, len(api.idemFunc()))
 }
 
-func TestSendLetter(t *testing.T) {
-	// Call SendLetter with a new instance of SendReq
-	request := &letter.SendReq{
-		Template: "307051",
-		Recipient: letter.RecipientDetails{
-			Address1:  "9355 Burton Way",
-			Address2:  "Courthouse",
-			Country:   "United States",
-			Firstname: "Judge",
-			Lastname:  "Judy",
-			State:     "CA",
-			Title:     "Mrs.",
-			Town:      "Beverly Hills",
-			Zipcode:   "90210",
-		},
-	}
+func TestStannp(t *testing.T) {
+	t.Run("test SendLetter and verify the response is correct", func(t *testing.T) {
+		request := &letter.SendReq{
+			Template: "307051",
+			Recipient: letter.RecipientDetails{
+				Address1:  "9355 Burton Way",
+				Address2:  "Courthouse",
+				Country:   "United States",
+				Firstname: "Judge",
+				Lastname:  "Judy",
+				State:     "CA",
+				Title:     "Mrs.",
+				Town:      "Beverly Hills",
+				Zipcode:   "90210",
+			},
+		}
 
-	// Note: This call is not actually sending a request.
-	response, apiErr := TestClient.SendLetter(context.Background(), request)
-	assert.True(t, reflect.ValueOf(apiErr).IsNil())
+		response, sendErr := TestClient.SendLetter(context.Background(), request)
+		assert.True(t, reflect.ValueOf(sendErr).IsNil())
+		assert.NotNil(t, response)
 
-	dateString := time.Now().Format("2006-01-02")
+		dateString := time.Now().Format("2006-01-02")
 
-	assert.Equal(t, response.Data.Cost, "0.84")
-	assert.Equal(t, response.Data.Format, "US-LETTER")
-	assert.Equal(t, response.Data.Id.String(), "0")
-	assert.Equal(t, response.Data.Status, "test")
-	assert.True(t, response.Success)
-	assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
-	assert.True(t, strings.HasPrefix(response.Data.Pdf, "https://us.stannp.com/api/v1/storage/get/"))
-}
+		assert.Equal(t, response.Data.Cost, "0.84")
+		assert.Equal(t, response.Data.Format, "US-LETTER")
+		assert.Equal(t, response.Data.Id.String(), "0")
+		assert.Equal(t, response.Data.Status, "test")
+		assert.True(t, response.Success)
+		assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
+		assert.True(t, strings.HasPrefix(response.Data.PDFURL, "https://us.stannp.com/api/v1/storage/get/"))
 
-func TestValidateAddress(t *testing.T) {
-	t.Run("verify is_valid is false for fake data", func(t *testing.T) {
+		t.Run("test GetPDFContents and verify the response is correct", func(t *testing.T) {
+			pdfRes, getPDFErr := TestClient.GetPDFContents(context.Background(), response.Data.PDFURL)
+			assert.True(t, reflect.ValueOf(getPDFErr).IsNil())
+			assert.NotNil(t, pdfRes)
+
+			t.Run("test SavePDFContents and verify the response is correct", func(t *testing.T) {
+				fileRes, fileErr := TestClient.SavePDFContents(pdfRes.Contents)
+				assert.True(t, reflect.ValueOf(fileErr).IsNil())
+				defer func() {
+					removeErr := os.Remove(fileRes.Name())
+					if removeErr != nil {
+						panic(fmt.Sprintf("Error deleting temp file while testing. Please verify [%s] does not exist on your local disk.", fileRes.Name()))
+					}
+				}()
+
+				content, err := os.ReadFile(fileRes.Name())
+				assert.Nil(t, err)
+
+				// Compare the length of the original data versus the expected return result to see if the PDF changed
+				assert.Equal(t, 624899, len(content))
+			})
+		})
+	})
+
+	t.Run("test ValidateAddress and verify is_valid is false for fake data", func(t *testing.T) {
 		request := &address.ValidateReq{
 			Address1: "9354444445 Burton Way",
 			City:     "Beverly Hills",
@@ -134,7 +156,7 @@ func TestValidateAddress(t *testing.T) {
 		assert.False(t, validateRes.Data.IsValid)
 		assert.True(t, validateRes.Success)
 	})
-	t.Run("verify is_valid is true for real data", func(t *testing.T) {
+	t.Run("test ValidateAddress and verify is_valid is true for real data", func(t *testing.T) {
 		request := &address.ValidateReq{
 			Address1: "9355 Burton Way",
 			City:     "Beverly Hills",

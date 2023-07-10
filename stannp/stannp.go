@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/google/uuid"
 )
 
+const PDFURLPrefix = "https://us.stannp.com/api/v1/storage"
 const BaseURL = "https://us.stannp.com/api/v1"
 const CreateURL = "create"
 const ValidateURL = "validate"
@@ -114,7 +116,7 @@ func (s *Stannp) IsTest() bool {
 func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
 	u, err := url.Parse(inputURL)
 	if err != nil {
-		return "", util.BuildError(500, fmt.Sprintf("error parsing inputURL [%s]", inputURL), false)
+		return "", util.BuildError(500, fmt.Sprintf("error parsing inputURL [%s]", inputURL))
 	}
 
 	q := u.Query()
@@ -131,7 +133,7 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL strin
 
 	req, err := http.NewRequestWithContext(ctx, "POST", authURL, inputReader)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req), false)
+		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req))
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -142,10 +144,58 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL strin
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error sending req [%+v]", req), false)
+		return nil, util.BuildError(500, fmt.Sprintf("error sending req [%+v]", req))
 	}
 
 	return res, nil
+}
+
+func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
+	if !strings.HasPrefix(pdfURL, PDFURLPrefix) {
+		return nil, util.BuildError(400, fmt.Sprintf("pdfURL must begin with [%s]. your input was [%s]", PDFURLPrefix, pdfURL))
+	}
+
+	fileURL, err := url.Parse(pdfURL)
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+	path := fileURL.Path
+	urlSegments := strings.Split(path, "/")
+	fileName := urlSegments[len(urlSegments)-1]
+
+	pdfGetReq, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, pdfURL, nil)
+	if reqErr != nil {
+		return nil, util.BuildError(500, reqErr.Error())
+	}
+
+	resp, err := s.client.Do(pdfGetReq)
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	return &letter.PDFRes{
+		Contents: resp.Body,
+		Name:     fileName,
+	}, nil
+}
+
+func (s *Stannp) SavePDFContents(pdfContents io.Reader) (*os.File, *util.APIError) {
+	tmpFile, err := os.CreateTemp("", "stannp_letter.*.pdf")
+	if err != nil {
+		return nil, util.BuildError(500, err.Error())
+	}
+
+	_, copyErr := io.Copy(tmpFile, pdfContents)
+	if copyErr != nil {
+		removeErr := os.Remove(tmpFile.Name())
+		if removeErr != nil {
+			return nil, util.BuildError(500, removeErr.Error())
+		}
+
+		return nil, util.BuildError(500, copyErr.Error())
+	}
+
+	return tmpFile, nil
 }
 
 func (s *Stannp) SendLetter(ctx context.Context, request *letter.SendReq) (*letter.SendRes, *util.APIError) {

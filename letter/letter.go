@@ -1,8 +1,25 @@
 package letter
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"io"
+)
 
 const URL = "letters"
+
+type Data struct {
+	Cost    string      `json:"cost"`
+	Created string      `json:"created"`
+	Format  string      `json:"format"`
+	Id      json.Number `json:"id"`
+	PDFURL  string      `json:"pdf"`
+	Status  string      `json:"status"`
+}
+
+type PDFRes struct {
+	Contents io.ReadCloser
+	Name     string
+}
 
 type RecipientDetails struct {
 	Address1  string `json:"address1"`
@@ -22,15 +39,6 @@ type SendReq struct {
 	MergeVariables MergeVariables   `json:"mergeVariables"`
 	Recipient      RecipientDetails `json:"recipient"`
 	Template       string           `json:"template"`
-}
-
-type Data struct {
-	Cost    string      `json:"cost"`
-	Created string      `json:"created"`
-	Format  string      `json:"format"`
-	Id      json.Number `json:"id"`
-	Pdf     string      `json:"pdf"`
-	Status  string      `json:"status"`
 }
 
 type SendRes struct {

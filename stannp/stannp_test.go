@@ -1,14 +1,18 @@
 package stannp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/CopilotIQ/stannp-client-golang/address"
 	"github.com/CopilotIQ/stannp-client-golang/letter"
+	"github.com/CopilotIQ/stannp-client-golang/util"
 	"github.com/jgroeneveld/trial/assert"
 	"github.com/joho/godotenv"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"reflect"
 	"strings"
@@ -41,7 +45,6 @@ func setup() {
 		WithAPIKey(apiKey),
 		WithClearZone(false),
 		WithDuplex(false),
-		WithIdempotencyFunc(DefaultIdemFunc),
 		WithPostUnverified(false),
 		WithTest(true),
 	)
@@ -53,43 +56,73 @@ func setup() {
 
 //goland:noinspection GoBoolExpressions
 func TestNew(t *testing.T) {
-	// Load .env file
 	err := godotenv.Load("../.env")
 	if err != nil {
 		t.Fatal("error loading .env file")
 	}
 
-	// Get API key from environment variable
 	envAPIKey, exists := os.LookupEnv("STANNP_API_KEY")
 	if !exists {
 		t.Fatal("STANNP_API_KEY not set in .env file")
 	}
 
-	// Initialize Stannp with test data
 	api := New(
 		WithAPIKey(envAPIKey),
 		WithClearZone(false),
 		WithDuplex(false),
 		WithPostUnverified(true),
 		WithTest(true),
-		WithIdempotencyFunc(DefaultIdemFunc),
 	)
 
-	// Assert that the Stannp client has been initialized with the correct values
 	assert.Equal(t, envAPIKey, api.apiKey)
 	assert.Equal(t, BaseURL, api.baseUrl)
 	assert.Equal(t, false, api.clearZone)
 	assert.Equal(t, false, api.duplex)
 	assert.Equal(t, true, api.postUnverified)
 	assert.Equal(t, true, api.test)
-	assert.NotNil(t, api.idemFunc)
-	assert.Equal(t, 36, len(api.idemFunc()))
+}
+
+func TestPost(t *testing.T) {
+	apiKey := util.RandomString(10)
+	ctx := context.Background()
+	inputBody := util.RandomString(10)
+	inputReader := bytes.NewBufferString(inputBody)
+	idempotenceyKey := util.RandomString(10)
+	testURL := "/dashboard/u/1?docId=" + util.RandomString(10)
+	urlParts := strings.Split(testURL, "?")
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		// make sure the original query string parameters are preserved AND the api key is injected
+		assert.Equal(t, r.URL.String(), urlParts[0]+"?"+APIKeyQSP+"="+apiKey+"&"+urlParts[1])
+		assert.True(t, reflect.DeepEqual(r.Header[ContentTypeHeaderKey], []string{URLEncodedHeaderVal}))
+		assert.True(t, reflect.DeepEqual(r.Header[XIdempotenceyHeaderKey], []string{idempotenceyKey}))
+
+		// in golang this closes the response writer automagically
+		w.Header().Set("Content-Type", "application/json")
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(handler))
+
+	api := New(
+		WithAPIKey(apiKey),
+		WithHTTPClient(ts.Client()),
+	)
+
+	if api.test != true {
+		t.FailNow()
+	}
+
+	res, apiErr := api.post(ctx, inputReader, ts.URL+testURL, idempotenceyKey)
+	assert.True(t, reflect.ValueOf(apiErr).IsNil())
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestStannp(t *testing.T) {
 	t.Run("test SendLetter and verify the response is correct", func(t *testing.T) {
 		request := &letter.SendReq{
-			Template: "307051",
+			Template:        "307051",
+			IdempotenceyKey: util.RandomString(10),
 			Recipient: letter.RecipientDetails{
 				Address1:  "9355 Burton Way",
 				Address2:  "Courthouse",

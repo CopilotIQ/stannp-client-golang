@@ -163,7 +163,7 @@ func (s *Stannp) GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDF
 	}, nil
 }
 
-func (s *Stannp) SavePDFContents(pdfContents io.ReadCloser) (*os.File, *util.APIError) {
+func (s *Stannp) SavePDFContents(pdfContents io.Reader) (*os.File, *util.APIError) {
 	tmpFile, err := os.CreateTemp("", "stannp_letter.*.pdf")
 	if err != nil {
 		return nil, util.BuildError(500, err.Error())

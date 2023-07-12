@@ -23,18 +23,18 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{},
 		},
 		{
-			name: "with addressFailNext",
+			name: "with validateAddressFailNext",
 			opts: []MockOption{
-				WithAddressFailNext(true),
+				WithValidateAddressFailNext(true),
 			},
-			expect: MockClient{addressFailNext: true},
+			expect: MockClient{validateAddressFailNext: true},
 		},
 		{
-			name: "with bytesToPDFFailNext",
+			name: "with savePDFContentsFailNext",
 			opts: []MockOption{
-				WithBytesToPDFFailNext(true),
+				WithSavePDFContentsFailNext(true),
 			},
-			expect: MockClient{bytesToPDFFailNext: true},
+			expect: MockClient{savePDFContentsFailNext: true},
 		},
 		{
 			name: "with codeNext",
@@ -44,11 +44,11 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{codeNext: 400},
 		},
 		{
-			name: "with downloadPDFFailNext",
+			name: "with getPDFContentsFailNext",
 			opts: []MockOption{
-				WithDownloadPDFFailNext(true),
+				WithGetPDFContentsFailNext(true),
 			},
-			expect: MockClient{downloadPDFFailNext: true},
+			expect: MockClient{getPDFContentsFailNext: true},
 		},
 		{
 			name: "with errorMessageNext",
@@ -58,11 +58,11 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{errorMessageNext: "error"},
 		},
 		{
-			name: "with invalidNext",
+			name: "with addressInvalidNext",
 			opts: []MockOption{
-				WithInvalidNext(true),
+				WithAddressInvalidNext(true),
 			},
-			expect: MockClient{invalidNext: true},
+			expect: MockClient{addressInvalidNext: true},
 		},
 		{
 			name: "with letterFailNext",
@@ -74,22 +74,22 @@ func TestNewMockClient(t *testing.T) {
 		{
 			name: "with all options",
 			opts: []MockOption{
-				WithAddressFailNext(true),
-				WithBytesToPDFFailNext(true),
+				WithValidateAddressFailNext(true),
+				WithSavePDFContentsFailNext(true),
 				WithCodeNext(400),
-				WithDownloadPDFFailNext(true),
+				WithGetPDFContentsFailNext(true),
 				WithErrorMessageNext("simulated error"),
-				WithInvalidNext(true),
+				WithAddressInvalidNext(true),
 				WithLetterFailNext(true),
 			},
 			expect: MockClient{
-				addressFailNext:     true,
-				bytesToPDFFailNext:  true,
-				codeNext:            400,
-				downloadPDFFailNext: true,
-				errorMessageNext:    "simulated error",
-				invalidNext:         true,
-				letterFailNext:      true,
+				validateAddressFailNext: true,
+				savePDFContentsFailNext: true,
+				codeNext:                400,
+				getPDFContentsFailNext:  true,
+				errorMessageNext:        "simulated error",
+				addressInvalidNext:      true,
+				letterFailNext:          true,
 			},
 		},
 	}
@@ -117,16 +117,16 @@ func TestMockBytesToPDF(t *testing.T) {
 		},
 		{
 			name:              "success not expected err expected",
-			mockClientOptions: []MockOption{WithBytesToPDFFailNext(true)},
+			mockClientOptions: []MockOption{WithSavePDFContentsFailNext(true)},
 			expectedSuccess:   false,
-			expectedError:     util.BuildError(500, "bytesToPDFFailNext is true"),
+			expectedError:     util.BuildError(500, "savePDFContentsFailNext is true"),
 		},
 		{
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
 				WithErrorMessageNext("custom message"),
-				WithBytesToPDFFailNext(true),
+				WithSavePDFContentsFailNext(true),
 			},
 			expectedSuccess: false,
 			expectedError:   util.BuildError(404, "custom message"),
@@ -165,16 +165,16 @@ func TestMockDownloadPDF(t *testing.T) {
 		},
 		{
 			name:              "success not expected err expected",
-			mockClientOptions: []MockOption{WithDownloadPDFFailNext(true)},
+			mockClientOptions: []MockOption{WithGetPDFContentsFailNext(true)},
 			expectedSuccess:   false,
-			expectedError:     util.BuildError(500, "downloadPDFFailNext is true"),
+			expectedError:     util.BuildError(500, "getPDFContentsFailNext is true"),
 		},
 		{
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
 				WithErrorMessageNext("custom message"),
-				WithDownloadPDFFailNext(true),
+				WithGetPDFContentsFailNext(true),
 			},
 			expectedSuccess: false,
 			expectedError:   util.BuildError(404, "custom message"),
@@ -281,20 +281,20 @@ func TestMockValidateAddress(t *testing.T) {
 		},
 		{
 			name:              "valid not expected err not expected",
-			mockClientOptions: []MockOption{WithInvalidNext(true)},
+			mockClientOptions: []MockOption{WithAddressInvalidNext(true)},
 			isValidExpected:   false,
 			errExpected:       nil,
 		},
 		{
 			name:              "err expected",
-			mockClientOptions: []MockOption{WithAddressFailNext(true)},
+			mockClientOptions: []MockOption{WithValidateAddressFailNext(true)},
 			isValidExpected:   false,
-			errExpected:       util.BuildError(500, "addressFailNext is true"),
+			errExpected:       util.BuildError(500, "validateAddressFailNext is true"),
 		},
 		{
 			name: "fail next code next err next",
 			mockClientOptions: []MockOption{
-				WithAddressFailNext(true),
+				WithValidateAddressFailNext(true),
 				WithCodeNext(400),
 				WithErrorMessageNext("custom message"),
 			},

@@ -11,14 +11,6 @@ import (
 	"os"
 )
 
-// Client interface is for mocking / testing. Implement it however you wish!
-type Client interface {
-	GetPDFContents(ctx context.Context, pdfURL string) (*letter.PDFRes, *util.APIError)
-	SavePDFContents(pdfContents io.Reader) (*os.File, *util.APIError)
-	SendLetter(ctx context.Context, req *letter.SendReq) (*letter.SendRes, *util.APIError)
-	ValidateAddress(ctx context.Context, req *address.ValidateReq) (*address.ValidateRes, *util.APIError)
-}
-
 type MockOption func(*MockClient)
 
 type MockClient struct {

@@ -23,18 +23,11 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{},
 		},
 		{
-			name: "with validateAddressFailNext",
+			name: "with addressInvalidNext",
 			opts: []MockOption{
-				WithValidateAddressFailNext(true),
+				WithAddressInvalidNext(true),
 			},
-			expect: MockClient{validateAddressFailNext: true},
-		},
-		{
-			name: "with savePDFContentsFailNext",
-			opts: []MockOption{
-				WithSavePDFContentsFailNext(true),
-			},
-			expect: MockClient{savePDFContentsFailNext: true},
+			expect: MockClient{addressInvalidNext: true},
 		},
 		{
 			name: "with codeNext",
@@ -44,13 +37,6 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{codeNext: 400},
 		},
 		{
-			name: "with getPDFContentsFailNext",
-			opts: []MockOption{
-				WithGetPDFContentsFailNext(true),
-			},
-			expect: MockClient{getPDFContentsFailNext: true},
-		},
-		{
 			name: "with errorMessageNext",
 			opts: []MockOption{
 				WithErrorMessageNext("error"),
@@ -58,11 +44,11 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{errorMessageNext: "error"},
 		},
 		{
-			name: "with addressInvalidNext",
+			name: "with getPDFContentsFailNext",
 			opts: []MockOption{
-				WithAddressInvalidNext(true),
+				WithGetPDFContentsFailNext(true),
 			},
-			expect: MockClient{addressInvalidNext: true},
+			expect: MockClient{getPDFContentsFailNext: true},
 		},
 		{
 			name: "with letterFailNext",
@@ -72,24 +58,38 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{letterFailNext: true},
 		},
 		{
-			name: "with all options",
+			name: "with savePDFContentsFailNext",
+			opts: []MockOption{
+				WithSavePDFContentsFailNext(true),
+			},
+			expect: MockClient{savePDFContentsFailNext: true},
+		},
+		{
+			name: "with validateAddressFailNext",
 			opts: []MockOption{
 				WithValidateAddressFailNext(true),
-				WithSavePDFContentsFailNext(true),
-				WithCodeNext(400),
-				WithGetPDFContentsFailNext(true),
-				WithErrorMessageNext("simulated error"),
+			},
+			expect: MockClient{validateAddressFailNext: true},
+		},
+		{
+			name: "with all options",
+			opts: []MockOption{
 				WithAddressInvalidNext(true),
+				WithCodeNext(400),
+				WithErrorMessageNext("simulated error"),
+				WithGetPDFContentsFailNext(true),
 				WithLetterFailNext(true),
+				WithSavePDFContentsFailNext(true),
+				WithValidateAddressFailNext(true),
 			},
 			expect: MockClient{
-				validateAddressFailNext: true,
-				savePDFContentsFailNext: true,
-				codeNext:                400,
-				getPDFContentsFailNext:  true,
-				errorMessageNext:        "simulated error",
 				addressInvalidNext:      true,
+				codeNext:                400,
+				errorMessageNext:        "simulated error",
+				getPDFContentsFailNext:  true,
 				letterFailNext:          true,
+				savePDFContentsFailNext: true,
+				validateAddressFailNext: true,
 			},
 		},
 	}

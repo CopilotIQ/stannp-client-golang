@@ -14,26 +14,20 @@ import (
 type MockOption func(*MockClient)
 
 type MockClient struct {
-	addressFailNext     bool
-	bytesToPDFFailNext  bool
-	codeNext            int
-	downloadPDFFailNext bool
-	errorMessageNext    string
-	invalidNext         bool
-	letterFailNext      bool
+	addressInvalidNext      bool
+	codeNext                int
+	errorMessageNext        string
+	getPDFContentsFailNext  bool
+	letterFailNext          bool
+	savePDFContentsFailNext bool
+	validateAddressFailNext bool
 }
 
 var _ Client = (*MockClient)(nil)
 
-func WithAddressFailNext(failNext bool) MockOption {
+func WithAddressInvalidNext(invalidNext bool) MockOption {
 	return func(c *MockClient) {
-		c.addressFailNext = failNext
-	}
-}
-
-func WithBytesToPDFFailNext(failNext bool) MockOption {
-	return func(c *MockClient) {
-		c.bytesToPDFFailNext = failNext
+		c.addressInvalidNext = invalidNext
 	}
 }
 
@@ -43,27 +37,33 @@ func WithCodeNext(codeNext int) MockOption {
 	}
 }
 
-func WithDownloadPDFFailNext(failNext bool) MockOption {
-	return func(c *MockClient) {
-		c.downloadPDFFailNext = failNext
-	}
-}
-
 func WithErrorMessageNext(errNext string) MockOption {
 	return func(c *MockClient) {
 		c.errorMessageNext = errNext
 	}
 }
 
-func WithInvalidNext(invalidNext bool) MockOption {
+func WithGetPDFContentsFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
-		c.invalidNext = invalidNext
+		c.getPDFContentsFailNext = failNext
 	}
 }
 
 func WithLetterFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
 		c.letterFailNext = failNext
+	}
+}
+
+func WithSavePDFContentsFailNext(failNext bool) MockOption {
+	return func(c *MockClient) {
+		c.savePDFContentsFailNext = failNext
+	}
+}
+
+func WithValidateAddressFailNext(failNext bool) MockOption {
+	return func(c *MockClient) {
+		c.validateAddressFailNext = failNext
 	}
 }
 
@@ -78,8 +78,8 @@ func NewMockClient(opts ...MockOption) *MockClient {
 }
 
 func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.PDFRes, *util.APIError) {
-	if mc.downloadPDFFailNext {
-		apiErr := util.BuildError(500, "downloadPDFFailNext is true")
+	if mc.getPDFContentsFailNext {
+		apiErr := util.BuildError(500, "getPDFContentsFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
@@ -99,8 +99,8 @@ func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.
 }
 
 func (mc *MockClient) SavePDFContents(_ io.Reader) (*os.File, *util.APIError) {
-	if mc.bytesToPDFFailNext {
-		apiErr := util.BuildError(500, "bytesToPDFFailNext is true")
+	if mc.savePDFContentsFailNext {
+		apiErr := util.BuildError(500, "savePDFContentsFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
@@ -144,8 +144,8 @@ func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.
 }
 
 func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq) (*address.ValidateRes, *util.APIError) {
-	if mc.addressFailNext {
-		apiErr := util.BuildError(500, "addressFailNext is true")
+	if mc.validateAddressFailNext {
+		apiErr := util.BuildError(500, "validateAddressFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
@@ -165,7 +165,7 @@ func (mc *MockClient) ValidateAddress(_ context.Context, _ *address.ValidateReq)
 		Success: true,
 	}
 
-	if mc.invalidNext {
+	if mc.addressInvalidNext {
 		validateRes.Data.IsValid = false
 	}
 

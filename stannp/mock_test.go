@@ -1,7 +1,9 @@
 package stannp
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"reflect"
 	"testing"
@@ -12,7 +14,74 @@ import (
 	"github.com/jgroeneveld/trial/assert"
 )
 
-func TestNewMockClient(t *testing.T) {
+func TestMockClient_GetPDFContents(t *testing.T) {
+	tests := []struct {
+		name              string
+		mockClientOptions []MockOption
+		expectedSuccess   bool
+		expectedError     *util.APIError
+	}{
+		{
+			name: "success expected err not expected",
+			mockClientOptions: []MockOption{WithGetPDFResponseNext(
+				&letter.PDFRes{
+					Contents: io.NopCloser(bytes.NewBufferString("success expected err not expected")),
+					Name:     "success expected err not expected",
+				},
+			)},
+			expectedSuccess: true,
+			expectedError:   nil,
+		},
+		{
+			name:              "success not expected err expected",
+			mockClientOptions: []MockOption{WithGetPDFContentsFailNext(true)},
+			expectedSuccess:   false,
+			expectedError:     util.BuildError(500, "getPDFContentsFailNext is true"),
+		},
+		{
+			name: "err expected code expected custom err expected",
+			mockClientOptions: []MockOption{
+				WithCodeNext(404),
+				WithErrorMessageNext("custom message"),
+				WithGetPDFContentsFailNext(true),
+			},
+			expectedSuccess: false,
+			expectedError:   util.BuildError(404, "custom message"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := NewMockClient(tt.mockClientOptions...)
+			pdfURL := util.RandomString(10)
+			downloadPDFRes, apiErr := mockClient.GetPDFContents(context.Background(), pdfURL)
+
+			if tt.expectedError != nil {
+				assert.NotNil(t, apiErr)
+				assert.Equal(t, *tt.expectedError, *apiErr)
+				assert.True(t, reflect.ValueOf(downloadPDFRes).IsNil())
+			} else {
+				assert.True(t, reflect.ValueOf(apiErr).IsNil())
+				assert.NotNil(t, downloadPDFRes)
+
+				assert.Equal(t, downloadPDFRes.Name, "success expected err not expected")
+
+				b1, err := io.ReadAll(downloadPDFRes.Contents)
+				assert.Nil(t, err)
+
+				err = downloadPDFRes.Contents.Close()
+				assert.Nil(t, err)
+
+				b2, err := io.ReadAll(bytes.NewBufferString("success expected err not expected"))
+				assert.Nil(t, err)
+
+				assert.True(t, reflect.DeepEqual(b1, b2))
+			}
+		})
+	}
+}
+
+func TestMockClient_NewMockClient(t *testing.T) {
 	tests := []struct {
 		name   string
 		opts   []MockOption
@@ -51,11 +120,57 @@ func TestNewMockClient(t *testing.T) {
 			expect: MockClient{getPDFContentsFailNext: true},
 		},
 		{
-			name: "with letterFailNext",
+			name: "with getPDFResponseNext",
 			opts: []MockOption{
-				WithLetterFailNext(true),
+				WithGetPDFResponseNext(
+					&letter.PDFRes{
+						Contents: io.NopCloser(bytes.NewBufferString("with getPDFResponseNext")),
+						Name:     "with getPDFResponseNext",
+					},
+				),
 			},
-			expect: MockClient{letterFailNext: true},
+			expect: MockClient{getPDFResponseNext: &letter.PDFRes{
+				Contents: io.NopCloser(bytes.NewBufferString("with getPDFResponseNext")),
+				Name:     "with getPDFResponseNext",
+			}},
+		},
+		{
+			name: "with sendLetterFailNext",
+			opts: []MockOption{
+				WithSendLetterFailNext(true),
+			},
+			expect: MockClient{sendLetterFailNext: true},
+		},
+		{
+			name: "with sendLetterResponseNext",
+			opts: []MockOption{
+				WithSendLetterResponseNext(
+					&letter.SendRes{
+						Data: letter.Data{
+							Cost:    "1",
+							Created: "2",
+							Format:  "3",
+							ID:      "4",
+							PDFURL:  "5",
+							Status:  "6",
+						},
+						Success: true,
+					},
+				),
+			},
+			expect: MockClient{
+				sendLetterResponseNext: &letter.SendRes{
+					Data: letter.Data{
+						Cost:    "1",
+						Created: "2",
+						Format:  "3",
+						ID:      "4",
+						PDFURL:  "5",
+						Status:  "6",
+					},
+					Success: true,
+				},
+			},
 		},
 		{
 			name: "with savePDFContentsFailNext",
@@ -78,16 +193,49 @@ func TestNewMockClient(t *testing.T) {
 				WithCodeNext(400),
 				WithErrorMessageNext("simulated error"),
 				WithGetPDFContentsFailNext(true),
-				WithLetterFailNext(true),
+				WithGetPDFResponseNext(
+					&letter.PDFRes{
+						Contents: io.NopCloser(bytes.NewBufferString("with getPDFResponseNext")),
+						Name:     "with getPDFResponseNext",
+					},
+				),
+				WithSendLetterFailNext(true),
+				WithSendLetterResponseNext(
+					&letter.SendRes{
+						Data: letter.Data{
+							Cost:    "7",
+							Created: "8",
+							Format:  "9",
+							ID:      "10",
+							PDFURL:  "11",
+							Status:  "12",
+						},
+						Success: true,
+					}),
 				WithSavePDFContentsFailNext(true),
 				WithValidateAddressFailNext(true),
 			},
 			expect: MockClient{
-				addressInvalidNext:      true,
-				codeNext:                400,
-				errorMessageNext:        "simulated error",
-				getPDFContentsFailNext:  true,
-				letterFailNext:          true,
+				addressInvalidNext:     true,
+				codeNext:               400,
+				errorMessageNext:       "simulated error",
+				getPDFContentsFailNext: true,
+				getPDFResponseNext: &letter.PDFRes{
+					Contents: io.NopCloser(bytes.NewBufferString("with getPDFResponseNext")),
+					Name:     "with getPDFResponseNext",
+				},
+				sendLetterFailNext: true,
+				sendLetterResponseNext: &letter.SendRes{
+					Data: letter.Data{
+						Cost:    "7",
+						Created: "8",
+						Format:  "9",
+						ID:      "10",
+						PDFURL:  "11",
+						Status:  "12",
+					},
+					Success: true,
+				},
 				savePDFContentsFailNext: true,
 				validateAddressFailNext: true,
 			},
@@ -97,12 +245,32 @@ func TestNewMockClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := NewMockClient(tt.opts...)
-			assert.Equal(t, tt.expect, *client)
+			assert.Equal(t, tt.expect.addressInvalidNext, client.addressInvalidNext)
+			assert.Equal(t, tt.expect.codeNext, client.codeNext)
+			assert.Equal(t, tt.expect.errorMessageNext, client.errorMessageNext)
+			assert.Equal(t, tt.expect.getPDFContentsFailNext, client.getPDFContentsFailNext)
+			assert.Equal(t, tt.expect.savePDFContentsFailNext, client.savePDFContentsFailNext)
+			assert.Equal(t, tt.expect.sendLetterFailNext, client.sendLetterFailNext)
+			assert.Equal(t, tt.expect.validateAddressFailNext, client.validateAddressFailNext)
+
+			if tt.expect.sendLetterResponseNext != nil {
+				assert.True(t, reflect.DeepEqual(*tt.expect.sendLetterResponseNext, *client.sendLetterResponseNext))
+			}
+
+			if tt.expect.getPDFResponseNext != nil {
+				b1, readErr := io.ReadAll(tt.expect.getPDFResponseNext.Contents)
+				assert.Nil(t, readErr)
+
+				b2, readErr := io.ReadAll(client.getPDFResponseNext.Contents)
+				assert.Nil(t, readErr)
+
+				assert.True(t, reflect.DeepEqual(b1, b2))
+			}
 		})
 	}
 }
 
-func TestMockBytesToPDF(t *testing.T) {
+func TestMockClient_SavePDFContents(t *testing.T) {
 	tests := []struct {
 		name              string
 		mockClientOptions []MockOption
@@ -150,7 +318,7 @@ func TestMockBytesToPDF(t *testing.T) {
 	}
 }
 
-func TestMockDownloadPDF(t *testing.T) {
+func TestMockClient_SendLetter(t *testing.T) {
 	tests := []struct {
 		name              string
 		mockClientOptions []MockOption
@@ -158,82 +326,36 @@ func TestMockDownloadPDF(t *testing.T) {
 		expectedError     *util.APIError
 	}{
 		{
-			name:              "success expected err not expected",
-			mockClientOptions: []MockOption{},
-			expectedSuccess:   true,
-			expectedError:     nil,
-		},
-		{
 			name:              "success not expected err expected",
-			mockClientOptions: []MockOption{WithGetPDFContentsFailNext(true)},
+			mockClientOptions: []MockOption{WithSendLetterFailNext(true)},
 			expectedSuccess:   false,
-			expectedError:     util.BuildError(500, "getPDFContentsFailNext is true"),
+			expectedError:     util.BuildError(500, "sendLetterFailNext is true"),
 		},
 		{
-			name: "err expected code expected custom err expected",
-			mockClientOptions: []MockOption{
-				WithCodeNext(404),
-				WithErrorMessageNext("custom message"),
-				WithGetPDFContentsFailNext(true),
+			name: "success expected with letter res pre-defined",
+			mockClientOptions: []MockOption{WithSendLetterResponseNext(
+				&letter.SendRes{
+					Data: letter.Data{
+						Cost:    "1",
+						Created: "2",
+						Format:  "3",
+						ID:      "4",
+						PDFURL:  "5",
+						Status:  "6",
+					},
+					Success: true,
+				},
+			),
 			},
-			expectedSuccess: false,
-			expectedError:   util.BuildError(404, "custom message"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockClient := NewMockClient(tt.mockClientOptions...)
-			pdfURL := util.RandomString(10)
-			downloadPDFRes, apiErr := mockClient.GetPDFContents(context.Background(), pdfURL)
-
-			if tt.expectedError != nil {
-				assert.NotNil(t, apiErr)
-				assert.Equal(t, *tt.expectedError, *apiErr)
-				assert.True(t, reflect.ValueOf(downloadPDFRes).IsNil())
-			} else {
-				assert.True(t, reflect.ValueOf(apiErr).IsNil())
-				assert.NotNil(t, downloadPDFRes)
-
-				assert.Equal(t, downloadPDFRes.Name, pdfURL)
-
-				byteArray, err := io.ReadAll(downloadPDFRes.Contents)
-				assert.Nil(t, err)
-
-				err = downloadPDFRes.Contents.Close()
-				assert.Nil(t, err)
-
-				assert.Equal(t, len([]byte(pdfURL)), len(byteArray))
-			}
-		})
-	}
-}
-
-func TestMockSendLetter(t *testing.T) {
-	tests := []struct {
-		name              string
-		mockClientOptions []MockOption
-		expectedSuccess   bool
-		expectedError     *util.APIError
-	}{
-		{
-			name:              "success expected err not expected",
-			mockClientOptions: []MockOption{},
-			expectedSuccess:   true,
-			expectedError:     nil,
-		},
-		{
-			name:              "success not expected err expected",
-			mockClientOptions: []MockOption{WithLetterFailNext(true)},
-			expectedSuccess:   false,
-			expectedError:     util.BuildError(500, "letterFailNext is true"),
+			expectedSuccess: true,
+			expectedError:   nil,
 		},
 		{
 			name: "err expected code expected custom err expected",
 			mockClientOptions: []MockOption{
 				WithCodeNext(404),
 				WithErrorMessageNext("custom message"),
-				WithLetterFailNext(true),
+				WithSendLetterFailNext(true),
 			},
 			expectedSuccess: false,
 			expectedError:   util.BuildError(404, "custom message"),
@@ -254,19 +376,18 @@ func TestMockSendLetter(t *testing.T) {
 				assert.NotNil(t, sendLetterRes)
 				assert.Equal(t, tt.expectedSuccess, sendLetterRes.Success)
 
-				assert.Equal(t, sendLetterRes.Data.Status, "received")
-				assert.True(t, sendLetterRes.Data.Cost != "")
-				assert.True(t, sendLetterRes.Data.Created != "")
-				assert.True(t, sendLetterRes.Data.Format != "")
-				assert.True(t, sendLetterRes.Data.ID == "0")
-				assert.True(t, sendLetterRes.Data.PDFURL != "")
-				assert.True(t, sendLetterRes.Data.Status != "")
+				assert.Equal(t, sendLetterRes.Data.Cost, "1")
+				assert.Equal(t, sendLetterRes.Data.Created, "2")
+				assert.Equal(t, sendLetterRes.Data.Format, "3")
+				assert.Equal(t, sendLetterRes.Data.ID, json.Number("4"))
+				assert.Equal(t, sendLetterRes.Data.PDFURL, "5")
+				assert.Equal(t, sendLetterRes.Data.Status, "6")
 			}
 		})
 	}
 }
 
-func TestMockValidateAddress(t *testing.T) {
+func TestMockClient_ValidateAddress(t *testing.T) {
 	tests := []struct {
 		name              string
 		mockClientOptions []MockOption

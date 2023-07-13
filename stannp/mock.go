@@ -18,8 +18,10 @@ type MockClient struct {
 	codeNext                int
 	errorMessageNext        string
 	getPDFContentsFailNext  bool
-	letterFailNext          bool
+	getPDFResponseNext      *letter.PDFRes
 	savePDFContentsFailNext bool
+	sendLetterFailNext      bool
+	sendLetterResponseNext  *letter.SendRes
 	validateAddressFailNext bool
 }
 
@@ -49,15 +51,27 @@ func WithGetPDFContentsFailNext(failNext bool) MockOption {
 	}
 }
 
-func WithLetterFailNext(failNext bool) MockOption {
+func WithGetPDFResponseNext(res *letter.PDFRes) MockOption {
 	return func(c *MockClient) {
-		c.letterFailNext = failNext
+		c.getPDFResponseNext = res
+	}
+}
+
+func WithSendLetterFailNext(failNext bool) MockOption {
+	return func(c *MockClient) {
+		c.sendLetterFailNext = failNext
 	}
 }
 
 func WithSavePDFContentsFailNext(failNext bool) MockOption {
 	return func(c *MockClient) {
 		c.savePDFContentsFailNext = failNext
+	}
+}
+
+func WithSendLetterResponseNext(res *letter.SendRes) MockOption {
+	return func(c *MockClient) {
+		c.sendLetterResponseNext = res
 	}
 }
 
@@ -92,6 +106,10 @@ func (mc *MockClient) GetPDFContents(_ context.Context, pdfURL string) (*letter.
 		return nil, apiErr
 	}
 
+	if mc.getPDFResponseNext != nil {
+		return mc.getPDFResponseNext, nil
+	}
+
 	return &letter.PDFRes{
 		Contents: io.NopCloser(bytes.NewBufferString(pdfURL)), // give the caller something to read if they want to
 		Name:     pdfURL,
@@ -116,8 +134,8 @@ func (mc *MockClient) SavePDFContents(_ io.Reader) (*os.File, *util.APIError) {
 }
 
 func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.SendRes, *util.APIError) {
-	if mc.letterFailNext {
-		apiErr := util.BuildError(500, "letterFailNext is true")
+	if mc.sendLetterFailNext {
+		apiErr := util.BuildError(500, "sendLetterFailNext is true")
 
 		if mc.codeNext != 0 {
 			apiErr.Code = mc.codeNext
@@ -128,6 +146,10 @@ func (mc *MockClient) SendLetter(_ context.Context, _ *letter.SendReq) (*letter.
 		}
 
 		return nil, apiErr
+	}
+
+	if mc.sendLetterResponseNext != nil {
+		return mc.sendLetterResponseNext, nil
 	}
 
 	return &letter.SendRes{

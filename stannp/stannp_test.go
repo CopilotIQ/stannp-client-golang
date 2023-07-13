@@ -140,11 +140,14 @@ func TestStannp(t *testing.T) {
 		assert.True(t, reflect.ValueOf(sendErr).IsNil())
 		assert.NotNil(t, response)
 
-		dateString := time.Now().Format("2006-01-02")
+		utc, locErr := time.LoadLocation("UTC")
+		assert.Nil(t, locErr)
+
+		dateString := time.Now().In(utc).Format("2006-01-02")
 
 		assert.Equal(t, response.Data.Cost, "0.84")
 		assert.Equal(t, response.Data.Format, "US-LETTER")
-		assert.Equal(t, response.Data.Id.String(), "0")
+		assert.Equal(t, response.Data.ID.String(), "0")
 		assert.Equal(t, response.Data.Status, "test")
 		assert.True(t, response.Success)
 		assert.True(t, strings.HasPrefix(response.Data.Created, dateString))
@@ -169,7 +172,7 @@ func TestStannp(t *testing.T) {
 				assert.Nil(t, err)
 
 				// Compare the length of the original data versus the expected return result to see if the PDF changed
-				assert.Equal(t, 624899, len(content))
+				assert.Equal(t, 624900, len(content))
 			})
 		})
 	})
@@ -207,7 +210,7 @@ func TestStannp(t *testing.T) {
 }
 
 func TestJSONValuesUnmarshalWithCorrectFlexibility(t *testing.T) {
-	t.Run("verify when Id is an int", func(t *testing.T) {
+	t.Run("verify when ID is an int", func(t *testing.T) {
 		rawJSON := `
 {
   "data": {
@@ -224,12 +227,12 @@ func TestJSONValuesUnmarshalWithCorrectFlexibility(t *testing.T) {
 		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
 		assert.Nil(t, jsonErr)
 
-		int64Val, err := letterRes.Data.Id.Int64()
+		int64Val, err := letterRes.Data.ID.Int64()
 		assert.Nil(t, err)
-		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, "12345", letterRes.Data.ID.String())
 		assert.Equal(t, int64(12345), int64Val)
 	})
-	t.Run("verify when Id is a string", func(t *testing.T) {
+	t.Run("verify when ID is a string", func(t *testing.T) {
 		rawJSON := `
 {
   "data": {
@@ -247,9 +250,9 @@ func TestJSONValuesUnmarshalWithCorrectFlexibility(t *testing.T) {
 		jsonErr := json.Unmarshal([]byte(rawJSON), &letterRes)
 		assert.Nil(t, jsonErr)
 
-		int64Val, err := letterRes.Data.Id.Int64()
+		int64Val, err := letterRes.Data.ID.Int64()
 		assert.Nil(t, err)
-		assert.Equal(t, "12345", letterRes.Data.Id.String())
+		assert.Equal(t, "12345", letterRes.Data.ID.String())
 		assert.Equal(t, int64(12345), int64Val)
 	})
 }

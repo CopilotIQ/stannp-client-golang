@@ -11,7 +11,7 @@ type Data struct {
 	Cost    string      `json:"cost"`
 	Created string      `json:"created"`
 	Format  string      `json:"format"`
-	Id      json.Number `json:"id"`
+	ID      json.Number `json:"id"`
 	PDFURL  string      `json:"pdf"`
 	Status  string      `json:"status"`
 }

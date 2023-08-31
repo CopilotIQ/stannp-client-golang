@@ -56,17 +56,18 @@ func ResToType(code int, reader io.Reader, successType interface{}) *APIError {
 		return BuildError(500, fmt.Sprintf("error reading response body [%+v] with err [%+v]", string(resBody), err))
 	}
 
-	var jsonErr error
 	var serverErr *APIError
 	if code >= http.StatusBadRequest {
-		jsonErr = json.Unmarshal(resBody, serverErr)
+		jsonErr := json.Unmarshal(resBody, serverErr)
+		if jsonErr != nil {
+			return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)))
+		}
 		serverErr.Code = code
 	} else {
-		jsonErr = json.Unmarshal(resBody, &successType)
-	}
-
-	if jsonErr != nil {
-		return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)))
+		jsonErr := json.Unmarshal(resBody, &successType)
+		if jsonErr != nil {
+			return BuildError(500, fmt.Sprintf("error unmarshalling res [%+v]", string(resBody)))
+		}
 	}
 
 	return serverErr

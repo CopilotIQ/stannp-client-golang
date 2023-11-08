@@ -1,6 +1,6 @@
-module github.com/CopilotIQ/stannp-client-golang
+module github.com/copilotiq/stannp-client-golang
 
-go 1.18
+go 1.21
 
 require (
 	github.com/jgroeneveld/trial v2.0.0+incompatible

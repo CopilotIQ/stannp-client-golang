@@ -5,9 +5,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/CopilotIQ/stannp-client-golang/address"
-	"github.com/CopilotIQ/stannp-client-golang/letter"
-	"github.com/CopilotIQ/stannp-client-golang/util"
+	"github.com/copilotiq/stannp-client-golang/address"
+	"github.com/copilotiq/stannp-client-golang/letter"
+	"github.com/copilotiq/stannp-client-golang/util"
 	"os"
 )
 

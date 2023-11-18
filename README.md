@@ -19,11 +19,11 @@ To use the Stannp API client in your Go project, follow these steps:
 3. Run the following command to add the client as a dependency:
 
    ```bash
-   go get github.com/CopilotIQ/stannp-client-golang
+   go get github.com/copilotiq/stannp-client-golang
 
 
 ## Import the client in your Go code
-`import "github.com/CopilotIQ/stannp-client-golang/stannp"`
+`import "github.com/copilotiq/stannp-client-golang/stannp"`
 
 ## Usage
 

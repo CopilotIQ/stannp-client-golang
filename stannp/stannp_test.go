@@ -29,15 +29,15 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+// setup builds the live-API client when a Stannp test key is configured in ../.env. Without one,
+// TestClient stays nil and the tests that call the real API skip; the offline tests still run.
 func setup() {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatalf("Unable to load .env file: %s", err)
-	}
+	_ = godotenv.Load("../.env")
 
 	apiKey := os.Getenv(ApiKeyEnvKey)
 	if apiKey == "" {
-		log.Fatalf("Cannot proceed when apiKey is the empty string [%s]", apiKey)
+		log.Printf("%s not set: skipping tests that call the live Stannp API", ApiKeyEnvKey)
+		return
 	}
 
 	// Initialize Stannp with test data
@@ -50,21 +50,13 @@ func setup() {
 	)
 
 	if !TestClient.IsTest() {
-		log.Fatalf("Cannot proceed when API key is live [%s]", apiKey)
+		log.Fatal("Cannot proceed when the Stannp client is not in test mode")
 	}
 }
 
 //goland:noinspection GoBoolExpressions
 func TestNew(t *testing.T) {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		t.Fatal("error loading .env file")
-	}
-
-	envAPIKey, exists := os.LookupEnv("STANNP_API_KEY")
-	if !exists {
-		t.Fatal("STANNP_API_KEY not set in .env file")
-	}
+	envAPIKey := "test-key-" + util.RandomString(10)
 
 	api := New(
 		WithAPIKey(envAPIKey),
@@ -93,8 +85,12 @@ func TestPost(t *testing.T) {
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
-		// make sure the original query string parameters are preserved AND the api key is injected
-		assert.Equal(t, r.URL.String(), urlParts[0]+"?"+APIKeyQSP+"="+apiKey+"&"+urlParts[1])
+		// the original query string is preserved untouched and the api key is NOT added to it
+		assert.Equal(t, urlParts[0]+"?"+urlParts[1], r.URL.String())
+		user, pass, ok := r.BasicAuth()
+		assert.True(t, ok)
+		assert.Equal(t, apiKey, user)
+		assert.Equal(t, "", pass)
 		assert.True(t, reflect.DeepEqual(r.Header[ContentTypeHeaderKey], []string{URLEncodedHeaderVal}))
 		assert.True(t, reflect.DeepEqual(r.Header[XIdempotenceyHeaderKey], []string{idempotenceyKey}))
 
@@ -119,6 +115,9 @@ func TestPost(t *testing.T) {
 }
 
 func TestStannp(t *testing.T) {
+	if TestClient == nil {
+		t.Skipf("%s not set; these tests call the live Stannp API", ApiKeyEnvKey)
+	}
 	t.Run("test SendLetter and verify the response is correct", func(t *testing.T) {
 		request := &letter.SendReq{
 			Template:        "307051",

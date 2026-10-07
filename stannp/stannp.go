@@ -2,6 +2,7 @@ package stannp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/copilotiq/stannp-client-golang/util"
 )
 
+// Deprecated: the API key is sent with HTTP Basic auth and must never be put in a URL.
 const APIKeyQSP = "api_key"
 const BaseURL = "https://us.stannp.com/api/v1"
 const ContentTypeHeaderKey = "Content-Type"
@@ -97,29 +99,16 @@ func (s *Stannp) IsTest() bool {
 	return s.test
 }
 
-func (s *Stannp) wrapAuth(inputURL string) (string, *util.APIError) {
-	u, err := url.Parse(inputURL)
-	if err != nil {
-		return "", util.BuildError(500, fmt.Sprintf("error parsing inputURL [%s]", inputURL))
-	}
-
-	q := u.Query()
-	q.Set(APIKeyQSP, s.apiKey)
-	u.RawQuery = q.Encode()
-	return u.String(), nil
-}
-
+// post authenticates with HTTP Basic auth (API key as username, empty password), which Stannp accepts
+// in place of the api_key query parameter. Errors name the method and path only: callers log and
+// store them, so they must never include the request, its URL query or its headers.
 func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idempotenceyHeaderVal string) (*http.Response, *util.APIError) {
-	authURL, wrapErr := s.wrapAuth(inputURL)
-	if wrapErr != nil {
-		return nil, wrapErr
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", authURL, inputReader)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, inputURL, inputReader)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error generating POST req [%+v] for req [%+v]", err, req))
+		return nil, util.BuildError(500, fmt.Sprintf("error generating POST request: %v", err))
 	}
 
+	req.SetBasicAuth(s.apiKey, "")
 	req.Header.Set(ContentTypeHeaderKey, URLEncodedHeaderVal)
 
 	if idempotenceyHeaderVal != "" {
@@ -128,7 +117,11 @@ func (s *Stannp) post(ctx context.Context, inputReader io.Reader, inputURL, idem
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return nil, util.BuildError(500, fmt.Sprintf("error sending req [%+v]", req))
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			err = urlErr.Err // *url.Error repeats the full URL; keep only the cause
+		}
+		return nil, util.BuildError(500, fmt.Sprintf("error sending POST %s: %v", req.URL.Path, err))
 	}
 
 	return res, nil
